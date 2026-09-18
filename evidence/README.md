@@ -95,7 +95,8 @@ The three rows that carry the argument of the whole design:
   takes it back.
 * **10** is the same artifact, unmodified, against a second institution whose
   build renames `Member ID` to `Member Number` and `/search` to `/lookup`. The
-  difference is a nine-line overlay, not a second recording.
+  difference is three overrides — one URL, two control labels — not a
+  second recording.
 
 ---
 
