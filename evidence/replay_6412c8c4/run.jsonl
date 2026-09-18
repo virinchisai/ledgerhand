@@ -1,0 +1,3 @@
+{"ts": "2026-09-18T19:16:28.083+00:00", "run_id": "replay_6412c8c4", "kind": "replay_start", "capability": "member.subaccount.open@v1", "tenant": "firstvalley", "approval": "draft", "attended": false, "arguments": ["account_type", "initial_deposit", "member_id"], "policy_profile": "default"}
+{"ts": "2026-09-18T19:16:28.084+00:00", "run_id": "replay_6412c8c4", "kind": "policy_denied", "scope": "approval", "reason": "capability member.subaccount.open@v1 contains an irreversible step and is draft; unattended replay requires approval"}
+{"ts": "2026-09-18T19:16:28.084+00:00", "run_id": "replay_6412c8c4", "kind": "replay_end", "status": "failed", "reason": "capability member.subaccount.open@v1 contains an irreversible step and is draft; unattended replay requires approval"}

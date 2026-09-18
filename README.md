@@ -17,6 +17,64 @@ goal ──▶ LLM discovery loop ──▶ capability artifact ──▶ determ
 
 ---
 
+## Architecture
+
+Six layers. The boundaries are placed so the expensive things to change are
+isolated from the cheap ones.
+
+```
+  goals/*.yaml
+       │  goal + typed contract, declared by a person
+       ▼
+  ┌─────────────────┐   observe → decide → act        ┌──────────────┐
+  │ DiscoveryAgent  │────────────────────────────────▶│              │
+  │ (the only place │◀────────────────────────────────│   Surface    │
+  │  a model runs)  │   UINode: role · name · value   │  (protocol)  │
+  └────────┬────────┘          state · box · frame    └──────┬───────┘
+           │ trace                                           │
+           ▼                                          WebSurface  ⋯ DesktopSurface
+  ┌─────────────────┐                                (Playwright)   (AX/UIA, not built)
+  │    Recorder     │  prunes · parameterises · derives checkpoints
+  └────────┬────────┘  rejects anything specific to this run
+           │
+           ▼
+  artifacts/*.json ── typed inputs · typed outputs · declared outcomes
+       │              ranked locators · checkpoints · risk · overlays
+       │ + arguments
+       ▼
+  ┌─────────────────┐   same Surface protocol, no LLM client imported
+  │  ReplayEngine   │──▶ SUCCESS · BUSINESS_OUTCOME · FAILED · ESCALATED
+  └────────┬────────┘
+           │ stuck / irreversible / hard failure
+           ▼
+  SessionBroker ── single control lease ──▶ operator console ──▶ resume
+           
+  PolicyGate + Redactor sit across both paths, enforced identically.
+```
+
+**How one request flows.** A goal file declares the contract — typed inputs,
+typed outputs, which product outcomes apply. The agent perceives the screen as
+`UINode`s (never selectors), picks one action from a closed vocabulary, and the
+executor substitutes `@param:` / `@secret:` references so the model never sees a
+value. On success the recorder compiles the trace into a capability. From then
+on `ReplayEngine` executes that contract with no model: it resolves each control
+through ranked locator strategies, evaluates the capability's **declared
+outcomes before its checkpoints** — which is what makes "no such member" an
+answer rather than a mystery — and returns a structured result.
+
+**The seams that matter:**
+
+| Seam | Why it is there |
+|---|---|
+| `Surface` protocol | The only layer that knows this is a browser. A desktop driver is a new producer of `UINode`s, not a redesign. |
+| `CapabilityArtifact` | A contract, not a macro. Decouples what was discovered from how it was discovered. |
+| `PolicyGate` | One enforcement path for discovery and replay — a guardrail only the exploratory path honours is not a guardrail. |
+| `SessionBroker` | Makes "who is driving" a single-valued, enforced piece of state so a run can pause, cede and resume. |
+
+Full reasoning and trade-offs: [`REPORT.md`](REPORT.md) §1.
+
+---
+
 ## Quick start
 
 Requires Python 3.10+ and [Ollama](https://ollama.com) for the discovery run.
@@ -45,17 +103,39 @@ cp .env.example .env && set -a && source .env && set +a
 
 ### The demo path
 
-Four commands, in order. Start the target application first and leave it running:
+Five steps, in order. **Use two terminals** — the target application runs in the
+foreground and must stay up:
 
 ```bash
+# terminal 1 — leave this running
 ledgerhand serve-app
 ```
+
+```
+Meridian Core (mock) on http://127.0.0.1:8848
+  tenant A  http://127.0.0.1:8848/t/firstvalley/
+  tenant B  http://127.0.0.1:8848/t/summitcu/
+```
+
+Everything below runs in terminal 2.
 
 **1 — Discovery.** An LLM drives the live UI until the goal is met, then the run
 is compiled into a capability. This is the only step that uses a model.
 
 ```bash
 ledgerhand discover goals/member-savings-balance.yaml
+```
+
+> **This takes ~21 minutes** on a local 7B on CPU — six decisions at 100–400s
+> each, plus a few minutes to load the weights. It is not hung. Add `--headful`
+> to watch it drive the browser, or skip to step 2: a recorded artifact is
+> already committed, so every later step works without running this.
+
+It prints each recorded step as it compiles them, ending with:
+
+```
+status succeeded after 6 steps in 1260s — goal state reached; all declared outputs located
+recorded member.savings_balance.lookup@v1 -> artifacts/member.savings_balance.lookup.v1.json
 ```
 
 **2 — Inspect** what was recorded, the way a reviewer would read it:
@@ -73,12 +153,33 @@ rather than a stack trace:
 ledgerhand replay member.savings_balance.lookup --arg member_id=23456
 ```
 
+```
+SUCCESS member.savings_balance.lookup@v1 -> ['savings_balance', 'member_name']
+┏━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┓
+┃ output          ┃ value           ┃
+┡━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━┩
+│ savings_balance │ 27430.09        │
+│ member_name     │ MARCUS OYELARAN │
+└─────────────────┴─────────────────┘
+evidence: evidence/replay_ca4e0cda
+```
+
+Note it returns `27430.09` as a **number**, not the string `"27,430.09"` the
+screen shows — the output is typed, and the extraction declares the transform.
+Takes about 10 seconds.
+
 **4 — Replay into an exceptional state.** A member that does not exist is a
 *business outcome*, not a crash — the caller gets a code, not a stack trace:
 
 ```bash
 ledgerhand replay member.savings_balance.lookup --arg member_id=99999
 ```
+
+```
+BUSINESS_OUTCOME MEMBER_NOT_FOUND: No member exists for the supplied member id.
+```
+
+Exit code 0, `ok == true`. The caller asked a question and got an answer.
 
 **5 — Watch the guardrail refuse.** A second capability, `member.subaccount.open`,
 ends by clicking "Open Account" — policy classifies that as irreversible, so it
@@ -88,6 +189,8 @@ will not replay unattended until a human approves it:
 # refused before touching the UI: irreversible step, capability is draft
 ledgerhand replay member.subaccount.open --arg member_id=23456 \
     --arg account_type=SAVINGS --arg initial_deposit=150.00
+# FAILED at step -1 (preflight): expected approved capability for unattended
+# replay; observed ... contains an irreversible step and is draft
 
 ledgerhand approve member.subaccount.open --state approved
 
@@ -183,6 +286,18 @@ curl -X POST localhost:8848/admin/chaos -d '{"force_validation": true}'  # host 
 
 Seeded members: `12345` (three accounts), `23456` (two accounts), `55555`
 (restricted — permission denial), anything else → not found.
+
+### If something does not work
+
+| Symptom | Cause and fix |
+|---|---|
+| `ledgerhand: command not found` | The package is not installed. Either `pip install -e .`, or run everything as `PYTHONPATH=src python3 -m ledgerhand.cli <command>` — identical behaviour. |
+| `discover` prints "warming the model…" and appears to hang | Expected. A cold 7B takes several minutes to load, then 100–400s per decision. The run log updates live: `tail -f evidence/discover_*/run.jsonl`. |
+| `secret 'MCB_OPERATOR' is not present in the environment` | The mock credentials are not exported. `set -a && source .env.example && set +a`. It fails this way on purpose rather than with a stack trace. |
+| `the target app is not running` | Start `ledgerhand serve-app` in another terminal and leave it up. |
+| Playwright errors about a missing browser | `python3 -m playwright install chromium`. |
+| `ConnectError` on port 11434 | Ollama is not running — `ollama serve`. Only step 1 needs it. |
+| `origin ... not in allowlist` | The allowlist in `policy.yaml` is default-deny. Working behaviour, not a bug. |
 
 ---
 
