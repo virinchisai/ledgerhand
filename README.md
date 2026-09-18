@@ -104,7 +104,7 @@ Everything except step 1 is model-free, so the whole system can be exercised
 with no model installed at all:
 
 ```bash
-python3 -m pytest              # 89 tests, incl. full discover→record→replay
+python3 -m pytest              # 90 tests, incl. full discover→record→replay
 ledgerhand replay member.savings_balance.lookup --arg member_id=12345
 ```
 
@@ -135,6 +135,9 @@ guardrails, and nothing claims a model found that route.
 | `products/meridian-core.yaml` | Vendor-product knowledge: the error taxonomy, shared by every capability and tenant. |
 | `policy.yaml` | Guardrail profiles. |
 | `goals/` | Discovery requests — where a capability's contract is declared before the model runs. |
+| `overlays/` | Per-tenant specialisations of a base capability. `summitcu.yaml` is three overrides that let the same artifact run against a second institution. |
+| `artifacts/` | The recorded capabilities themselves, as reviewable JSON. |
+| `scripts/` | `evidence.sh` reproduces the whole evidence pack; `build_evidence_readme.py` regenerates the evidence index from the runs on disk; `record_reference_capability.py` records the committing capability deterministically (and documents why). |
 
 ---
 
@@ -151,7 +154,8 @@ ledgerhand invoke member.savings_balance.lookup --arg member_id=12345
 # Unattended replay of an irreversible capability is gated on approval
 ledgerhand approve member.subaccount.open --state approved
 
-# Apply a tenant overlay: same capability, a different institution's build
+# Apply a tenant overlay, then run the same capability against that institution
+ledgerhand overlay overlays/summitcu.yaml
 ledgerhand replay member.savings_balance.lookup --tenant summitcu --arg member_id=12345
 
 # Watch it drive the browser
