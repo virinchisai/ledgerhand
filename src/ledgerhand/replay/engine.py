@@ -343,7 +343,13 @@ class ReplayEngine:
                 observed=action_decision.reason, obs=obs))
 
         risk = step.risk if step.risk is not RiskTier.SAFE else self.gate.classify_risk(step.action, node)
-        risk_decision = self.gate.check_risk(risk, attended=self.attended)
+        # An approved capability carries a standing human decision for its
+        # irreversible steps -- that is what approving it *means*. Without this,
+        # approval would gate entry to the run and then the run would escalate
+        # at the very step approval was granted for, which makes the gate
+        # ceremony rather than control. Unapproved and unattended still stops.
+        decided_by_human = self.attended or spec.approval is ApprovalState.APPROVED
+        risk_decision = self.gate.check_risk(risk, attended=decided_by_human)
         if risk_decision.verdict is Verdict.DENY:
             return _Stop(ReplayStatus.FAILED, failure=self._failure(
                 step, expected="an action permitted at this risk tier",

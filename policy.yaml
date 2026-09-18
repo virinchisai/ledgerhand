@@ -11,7 +11,7 @@ profiles:
     # single decision costs ~2 minutes; a hosted model would want a tenth of
     # this. It is a policy value precisely because it depends on the deployment
     # rather than on the flow.
-    max_run_seconds: 3600
+    max_run_seconds: 7200
 
     network:
       allowed_origins:

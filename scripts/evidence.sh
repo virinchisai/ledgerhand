@@ -11,6 +11,7 @@ export LEDGERHAND_MCB_OPERATOR="${LEDGERHAND_MCB_OPERATOR:-svc.automation}"
 export LEDGERHAND_MCB_PASSWORD="${LEDGERHAND_MCB_PASSWORD:-Sandbox!Demo1}"
 
 CAP="member.savings_balance.lookup"
+RISKY="member.subaccount.open"
 APP="http://127.0.0.1:8848"
 run() { echo; echo "=============== $1 ==============="; shift; "$@" || true; }
 chaos() { curl -s -X POST "$APP/admin/chaos" -d "$1" >/dev/null; }
@@ -70,5 +71,55 @@ run "12. the capability catalog an AI agent would discover" \
 reset
 run "13. invoked by name, as an agent would call it" \
   python3 -m ledgerhand.cli invoke "$CAP" --arg member_id=23456
+
+# ---------------------------------------------------------------------------
+# The irreversible capability. Its last click opens a real account, so policy
+# classifies it as irreversible and it will not replay unattended until a human
+# has approved it. These four runs are the guardrail actually working.
+# ---------------------------------------------------------------------------
+
+if [ -f "artifacts/${RISKY}.v1.json" ]; then
+  reset
+  run "14. the recorded capability that COMMITS something — note the risk column" \
+    python3 -m ledgerhand.cli show "$RISKY"
+
+  python3 -m ledgerhand.cli approve "$RISKY" --state draft >/dev/null 2>&1
+  reset
+  run "15. unattended replay of a DRAFT capability with an irreversible step — REFUSED before touching the UI" \
+    python3 -m ledgerhand.cli replay "$RISKY" \
+      --arg member_id=23456 --arg account_type=SAVINGS \
+      --arg nickname="Holiday fund" --arg initial_deposit=150.00
+
+  reset
+  run "16. same capability, ATTENDED — a human is watching, so it proceeds" \
+    python3 -m ledgerhand.cli replay "$RISKY" --attended \
+      --arg member_id=23456 --arg account_type=SAVINGS \
+      --arg nickname="Holiday fund" --arg initial_deposit=150.00
+
+  run "17. a human approves the capability for unattended use" \
+    python3 -m ledgerhand.cli approve "$RISKY" --state approved
+
+  reset
+  run "18. unattended replay of the APPROVED capability — now permitted" \
+    python3 -m ledgerhand.cli replay "$RISKY" \
+      --arg member_id=23456 --arg account_type=SAVINGS \
+      --arg nickname="Holiday fund" --arg initial_deposit=150.00
+
+  reset
+  run "19. a deposit below the capability's own minimum — rejected by the input contract, before the bank ever sees it" \
+    python3 -m ledgerhand.cli replay "$RISKY" --attended \
+      --arg member_id=23456 --arg account_type=SAVINGS \
+      --arg nickname="Holiday fund" --arg initial_deposit=5.00
+
+  reset; chaos '{"force_validation": true}'
+  run "20. the host declines the posting — a BUSINESS OUTCOME on a committing capability, not a crash" \
+    python3 -m ledgerhand.cli replay "$RISKY" --attended \
+      --arg member_id=23456 --arg account_type=SAVINGS \
+      --arg nickname="Holiday fund" --arg initial_deposit=150.00
+
+  python3 -m ledgerhand.cli approve "$RISKY" --state draft >/dev/null 2>&1
+else
+  echo; echo "(skipping 14-19: ${RISKY} has not been recorded yet)"
+fi
 
 echo; echo "evidence written under evidence/"

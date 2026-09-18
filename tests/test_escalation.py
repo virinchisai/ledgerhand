@@ -256,3 +256,48 @@ def _record_artifact(surface, gate, evidence):
                             attended=True).run(goal, max_steps=12)
     assert result.succeeded, result.reason
     return record(result, load_product(ROOT / "products" / "meridian-core.yaml"))
+
+
+def test_oscillating_between_two_states_is_detected_as_stuck(rig):
+    """Flipping a dropdown back and forth changes the screen every time, so a
+    naive change test reads it as progress. It is a dead end wearing a hat."""
+    surface, leased, broker, gate, evidence = rig
+    goal, _ = load_goal(ROOT / "goals" / "member-subaccount-open.yaml")
+
+    class Oscillating(OracleClient):
+        """Signs on, reaches the form, then flips the dropdown forever."""
+        flip = 0
+
+        def decide(self, system, user, *, max_tokens=110):
+            # Only hijack the navigation question -- the goal check is a
+            # different prompt and answering it with an action would make this
+            # double test the wrong thing.
+            if "VALUES WANTED:" not in user and "combobox" in user:
+                self.flip += 1
+                value = "SAVINGS" if self.flip % 2 else "CHECKING"
+                import json as _json
+                raw = _json.dumps({"action": "select", "target": self._handle(user),
+                                   "value": value, "reason": "select account type"})
+                from ledgerhand.agent.llm import LLMReply, _extract_json
+                return LLMReply(raw, _extract_json(raw), 0, self.name)
+            return super().decide(system, user, max_tokens=max_tokens)
+
+        @staticmethod
+        def _handle(user):
+            import re
+            m = re.search(r"\[(\S+)\] combobox", user)
+            return m.group(1) if m else "none"
+
+    plan = [
+        ("Operator ID", {"action": "type", "value": "@secret:MCB_OPERATOR"}),
+        ("Password", {"action": "type", "value": "@secret:MCB_PASSWORD"}),
+        ("Sign On", {"action": "click", "role": "button"}),
+        ("Member ID", {"action": "type", "value": "@param:member_id"}),
+        ("Search", {"action": "click", "role": "button"}),
+        ("Open Sub-Account", {"action": "click", "role": "link"}),
+    ]
+    result = DiscoveryAgent(leased, Oscillating(plan=plan), gate, evidence,
+                            attended=True).run(goal, max_steps=20)
+    assert result.status == "stuck"
+    assert "cycling" in result.reason, result.reason
+    assert len(result.trace) < 20, "should stop well before the budget"

@@ -1,0 +1,2 @@
+{"ts": "2026-09-18T14:16:15.697+00:00", "run_id": "replay_910e7b72", "kind": "replay_start", "capability": "member.subaccount.open@v1", "tenant": "firstvalley", "approval": "approved", "attended": true, "arguments": ["account_type", "initial_deposit", "member_id", "nickname"], "policy_profile": "default"}
+{"ts": "2026-09-18T14:16:15.698+00:00", "run_id": "replay_910e7b72", "kind": "replay_end", "status": "failed", "reason": "initial_deposit must be >= 25.0"}

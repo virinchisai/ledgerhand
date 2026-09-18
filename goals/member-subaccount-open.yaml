@@ -1,0 +1,73 @@
+# A capability that COMMITS something. The point of recording this one is the
+# risk path: its final click opens a real account, which the policy classifies
+# as irreversible. The resulting artifact therefore will not replay unattended
+# until a human has approved it.
+
+capability_id: member.subaccount.open
+name: Open a sub-account for a member
+description: >-
+  Sign on to the servicing console, look up a member, open a new sub-account of
+  the requested type with an initial deposit, and return the new account number
+  and confirmation reference from the confirmation screen.
+
+goal: >-
+  Sign on, find the member, open a new sub-account for them with the requested
+  type, nickname and initial deposit, and reach the confirmation screen.
+
+tenant: firstvalley
+product_version: "7.2.14"
+entry_url: "http://127.0.0.1:8848/t/firstvalley/"
+
+inputs:
+  - name: member_id
+    type: string
+    description: the member number to open the sub-account for
+    sensitivity: pii
+    pattern: "[0-9]{4,12}"
+    example: "<member id>"
+  - name: account_type
+    type: enum
+    description: the kind of account to open
+    enum: ["SAVINGS", "CHECKING", "MONEY MARKET"]
+    example: "SAVINGS"
+  - name: nickname
+    type: string
+    description: a short label for the new account
+    required: false
+    example: "Holiday fund"
+  - name: initial_deposit
+    type: money
+    description: the opening deposit, at least 25.00
+    minimum: 25.0
+    example: "100.00"
+
+secrets:
+  MCB_OPERATOR:
+    env: LEDGERHAND_MCB_OPERATOR
+    description: the operator id to sign on with
+  MCB_PASSWORD:
+    env: LEDGERHAND_MCB_PASSWORD
+    description: the password for that operator
+
+outputs:
+  - name: new_account_number
+    type: string
+    description: the new account number shown on the confirmation screen
+  - name: confirmation_number
+    type: string
+    description: the confirmation reference beginning CNF-
+
+outcomes:
+  - MEMBER_NOT_FOUND
+  - ACCESS_DENIED
+  - VALIDATION_REJECTED
+  - POSTING_UNAVAILABLE
+  - MAINTENANCE_INTERSTITIAL
+  - SESSION_EXPIRED
+  - APP_ERROR
+
+values:
+  member_id: "23456"
+  account_type: "SAVINGS"
+  nickname: "Holiday fund"
+  initial_deposit: "150.00"

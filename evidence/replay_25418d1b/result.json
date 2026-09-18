@@ -1,0 +1,232 @@
+{
+  "capability": "member.subaccount.open@v1",
+  "tenant": "firstvalley",
+  "run_id": "replay_25418d1b",
+  "status": "success",
+  "outputs": {
+    "new_account_number": "0003-4411",
+    "confirmation_number": "CNF-F7131653"
+  },
+  "outcome_code": null,
+  "outcome_class": null,
+  "message": null,
+  "failure": null,
+  "intervention_id": null,
+  "steps": [
+    {
+      "index": 0,
+      "intent": "act on Operator ID",
+      "action": "type",
+      "status": "ok",
+      "started_at": "2026-09-18T14:15:53.679700Z",
+      "duration_ms": 2479,
+      "locator": {
+        "control": "textbox 'Operator ID'",
+        "resolved_by": "label_text",
+        "rank": 0,
+        "candidates_seen": 1,
+        "used_fallback": false,
+        "note": "rank 0 textbox labelled 'Operator ID': matched"
+      },
+      "checkpoint": null,
+      "checkpoint_passed": null,
+      "recoveries": [],
+      "detail": null,
+      "screenshot": null
+    },
+    {
+      "index": 1,
+      "intent": "act on Password",
+      "action": "type",
+      "status": "ok",
+      "started_at": "2026-09-18T14:15:56.158908Z",
+      "duration_ms": 2293,
+      "locator": {
+        "control": "textbox 'Password'",
+        "resolved_by": "label_text",
+        "rank": 0,
+        "candidates_seen": 1,
+        "used_fallback": false,
+        "note": "rank 0 textbox labelled 'Password': matched"
+      },
+      "checkpoint": null,
+      "checkpoint_passed": null,
+      "recoveries": [],
+      "detail": null,
+      "screenshot": null
+    },
+    {
+      "index": 2,
+      "intent": "act on Sign On",
+      "action": "click",
+      "status": "ok",
+      "started_at": "2026-09-18T14:15:58.452394Z",
+      "duration_ms": 630,
+      "locator": {
+        "control": "button 'Sign On'",
+        "resolved_by": "ax_role_name",
+        "rank": 0,
+        "candidates_seen": 1,
+        "used_fallback": false,
+        "note": "rank 0 button[name~='Sign On']: matched"
+      },
+      "checkpoint": "text_present('Home > Member Inquiry')",
+      "checkpoint_passed": true,
+      "recoveries": [],
+      "detail": null,
+      "screenshot": null
+    },
+    {
+      "index": 3,
+      "intent": "act on Member ID",
+      "action": "type",
+      "status": "ok",
+      "started_at": "2026-09-18T14:15:59.082708Z",
+      "duration_ms": 2237,
+      "locator": {
+        "control": "textbox 'Member ID'",
+        "resolved_by": "label_text",
+        "rank": 0,
+        "candidates_seen": 1,
+        "used_fallback": false,
+        "note": "rank 0 textbox labelled 'Member ID': matched"
+      },
+      "checkpoint": null,
+      "checkpoint_passed": null,
+      "recoveries": [],
+      "detail": null,
+      "screenshot": null
+    },
+    {
+      "index": 4,
+      "intent": "act on Search",
+      "action": "click",
+      "status": "ok",
+      "started_at": "2026-09-18T14:16:01.320014Z",
+      "duration_ms": 2151,
+      "locator": {
+        "control": "button 'Search'",
+        "resolved_by": "ax_role_name",
+        "rank": 0,
+        "candidates_seen": 1,
+        "used_fallback": false,
+        "note": "rank 0 button[name~='Search']: matched"
+      },
+      "checkpoint": "text_present('Home > Member Inquiry > Detail')",
+      "checkpoint_passed": true,
+      "recoveries": [],
+      "detail": null,
+      "screenshot": null
+    },
+    {
+      "index": 5,
+      "intent": "act on Open Sub-Account",
+      "action": "click",
+      "status": "ok",
+      "started_at": "2026-09-18T14:16:03.471832Z",
+      "duration_ms": 2127,
+      "locator": {
+        "control": "link 'Open Sub-Account'",
+        "resolved_by": "ax_role_name",
+        "rank": 0,
+        "candidates_seen": 1,
+        "used_fallback": false,
+        "note": "rank 0 link[name~='Open Sub-Account']: matched"
+      },
+      "checkpoint": "text_present('Open Sub-Account')",
+      "checkpoint_passed": true,
+      "recoveries": [],
+      "detail": null,
+      "screenshot": null
+    },
+    {
+      "index": 6,
+      "intent": "act on Account Type",
+      "action": "select",
+      "status": "ok",
+      "started_at": "2026-09-18T14:16:05.598940Z",
+      "duration_ms": 2102,
+      "locator": {
+        "control": "combobox 'Account Type'",
+        "resolved_by": "label_text",
+        "rank": 0,
+        "candidates_seen": 1,
+        "used_fallback": false,
+        "note": "rank 0 combobox labelled 'Account Type': matched"
+      },
+      "checkpoint": null,
+      "checkpoint_passed": null,
+      "recoveries": [],
+      "detail": null,
+      "screenshot": null
+    },
+    {
+      "index": 7,
+      "intent": "act on Nickname",
+      "action": "type",
+      "status": "ok",
+      "started_at": "2026-09-18T14:16:07.701803Z",
+      "duration_ms": 2299,
+      "locator": {
+        "control": "textbox 'Nickname'",
+        "resolved_by": "label_text",
+        "rank": 0,
+        "candidates_seen": 1,
+        "used_fallback": false,
+        "note": "rank 0 textbox labelled 'Nickname': matched"
+      },
+      "checkpoint": null,
+      "checkpoint_passed": null,
+      "recoveries": [],
+      "detail": null,
+      "screenshot": null
+    },
+    {
+      "index": 8,
+      "intent": "act on Initial Deposit",
+      "action": "type",
+      "status": "ok",
+      "started_at": "2026-09-18T14:16:10.001346Z",
+      "duration_ms": 2180,
+      "locator": {
+        "control": "textbox 'Initial Deposit'",
+        "resolved_by": "label_text",
+        "rank": 0,
+        "candidates_seen": 1,
+        "used_fallback": false,
+        "note": "rank 0 textbox labelled 'Initial Deposit': matched"
+      },
+      "checkpoint": null,
+      "checkpoint_passed": null,
+      "recoveries": [],
+      "detail": null,
+      "screenshot": null
+    },
+    {
+      "index": 9,
+      "intent": "act on Open Account",
+      "action": "click",
+      "status": "ok",
+      "started_at": "2026-09-18T14:16:12.182366Z",
+      "duration_ms": 2110,
+      "locator": {
+        "control": "button 'Open Account'",
+        "resolved_by": "ax_role_name",
+        "rank": 0,
+        "candidates_seen": 1,
+        "used_fallback": false,
+        "note": "rank 0 button[name~='Open Account']: matched"
+      },
+      "checkpoint": "all_of(text_present('Home > Member Inquiry > Detail > Confirmation'), control_present(source of output 'new_account_number'), control_present(source of output 'confirmation_number'))",
+      "checkpoint_passed": true,
+      "recoveries": [],
+      "detail": null,
+      "screenshot": null
+    }
+  ],
+  "started_at": "2026-09-18T14:15:53.139454Z",
+  "duration_ms": 21183,
+  "evidence_dir": "/Users/virinchisai/ledgerhand/evidence/replay_25418d1b",
+  "drift_detected": false,
+  "drift_notes": []
+}

@@ -1,0 +1,1904 @@
+{
+  "schema_version": "1.1",
+  "id": "member.subaccount.open",
+  "version": 1,
+  "name": "Open a sub-account for a member",
+  "description": "Sign on to the servicing console, look up a member, open a new sub-account of the requested type with an initial deposit, and return the new account number and confirmation reference from the confirmation screen.",
+  "target": {
+    "product": "meridian-core",
+    "product_version": "7.2.14",
+    "tenant": "firstvalley",
+    "surface": "web",
+    "entry_url": "http://127.0.0.1:8848/t/firstvalley/",
+    "policy_profile": "default"
+  },
+  "inputs": [
+    {
+      "name": "member_id",
+      "type": "string",
+      "required": true,
+      "description": "the member number to open the sub-account for",
+      "sensitivity": "pii",
+      "default": null,
+      "pattern": "[0-9]{4,12}",
+      "enum": null,
+      "minimum": null,
+      "maximum": null,
+      "example": "<member id>"
+    },
+    {
+      "name": "account_type",
+      "type": "enum",
+      "required": true,
+      "description": "the kind of account to open",
+      "sensitivity": "internal",
+      "default": null,
+      "pattern": null,
+      "enum": [
+        "SAVINGS",
+        "CHECKING",
+        "MONEY MARKET"
+      ],
+      "minimum": null,
+      "maximum": null,
+      "example": "SAVINGS"
+    },
+    {
+      "name": "nickname",
+      "type": "string",
+      "required": false,
+      "description": "a short label for the new account",
+      "sensitivity": "internal",
+      "default": null,
+      "pattern": null,
+      "enum": null,
+      "minimum": null,
+      "maximum": null,
+      "example": "Holiday fund"
+    },
+    {
+      "name": "initial_deposit",
+      "type": "money",
+      "required": true,
+      "description": "the opening deposit, at least 25.00",
+      "sensitivity": "internal",
+      "default": null,
+      "pattern": null,
+      "enum": null,
+      "minimum": 25.0,
+      "maximum": null,
+      "example": "100.00"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "new_account_number",
+      "type": "string",
+      "description": "the new account number shown on the confirmation screen",
+      "sensitivity": "internal",
+      "required": true,
+      "extract": {
+        "control": {
+          "description": "source of output 'new_account_number'",
+          "strategies": [
+            {
+              "kind": "anchor_relative",
+              "rank": 0,
+              "confidence": 0.7,
+              "role": "cell",
+              "name": null,
+              "label": null,
+              "anchor": {
+                "anchor_text": "New Account Number",
+                "anchor_match": "normalized",
+                "container_role": "row",
+                "column_header": null,
+                "cell_index": 1
+              },
+              "attr": null,
+              "attr_value": null,
+              "css": null,
+              "ordinal": null,
+              "within_text": null
+            },
+            {
+              "kind": "dom_css",
+              "rank": 1,
+              "confidence": 0.35,
+              "role": null,
+              "name": null,
+              "label": null,
+              "anchor": null,
+              "attr": null,
+              "attr_value": null,
+              "css": "table > tbody > tr:nth-of-type(2) > td:nth-of-type(2)",
+              "ordinal": null,
+              "within_text": null
+            }
+          ],
+          "frame_path": [
+            "mcbmain"
+          ],
+          "allow_fallback": true
+        },
+        "attribute": "text",
+        "attr_name": null,
+        "transform": "trim",
+        "regex": null,
+        "group": 1
+      }
+    },
+    {
+      "name": "confirmation_number",
+      "type": "string",
+      "description": "the confirmation reference beginning CNF-",
+      "sensitivity": "internal",
+      "required": true,
+      "extract": {
+        "control": {
+          "description": "source of output 'confirmation_number'",
+          "strategies": [
+            {
+              "kind": "anchor_relative",
+              "rank": 0,
+              "confidence": 0.7,
+              "role": "cell",
+              "name": null,
+              "label": null,
+              "anchor": {
+                "anchor_text": "Confirmation No.",
+                "anchor_match": "normalized",
+                "container_role": "row",
+                "column_header": null,
+                "cell_index": 1
+              },
+              "attr": null,
+              "attr_value": null,
+              "css": null,
+              "ordinal": null,
+              "within_text": null
+            },
+            {
+              "kind": "dom_css",
+              "rank": 1,
+              "confidence": 0.35,
+              "role": null,
+              "name": null,
+              "label": null,
+              "anchor": null,
+              "attr": null,
+              "attr_value": null,
+              "css": "table > tbody > tr:nth-of-type(6) > td:nth-of-type(2)",
+              "ordinal": null,
+              "within_text": null
+            }
+          ],
+          "frame_path": [
+            "mcbmain"
+          ],
+          "allow_fallback": true
+        },
+        "attribute": "text",
+        "attr_name": null,
+        "transform": "trim",
+        "regex": null,
+        "group": 1
+      }
+    }
+  ],
+  "outcomes": [
+    {
+      "code": "MEMBER_NOT_FOUND",
+      "classification": "business_outcome",
+      "detect": {
+        "kind": "any_of",
+        "text": null,
+        "match": "normalized",
+        "control": null,
+        "pattern": null,
+        "operands": [
+          {
+            "kind": "text_present",
+            "text": "No member found",
+            "match": "contains",
+            "control": null,
+            "pattern": null,
+            "operands": [],
+            "note": null
+          },
+          {
+            "kind": "text_present",
+            "text": "MCB-0042",
+            "match": "contains",
+            "control": null,
+            "pattern": null,
+            "operands": [],
+            "note": null
+          }
+        ],
+        "note": null
+      },
+      "message": "No member exists for the supplied member id.",
+      "recovery": null,
+      "applies_to_steps": null
+    },
+    {
+      "code": "ACCESS_DENIED",
+      "classification": "business_outcome",
+      "detect": {
+        "kind": "any_of",
+        "text": null,
+        "match": "normalized",
+        "control": null,
+        "pattern": null,
+        "operands": [
+          {
+            "kind": "text_present",
+            "text": "MCB-0310",
+            "match": "contains",
+            "control": null,
+            "pattern": null,
+            "operands": [],
+            "note": null
+          },
+          {
+            "kind": "all_of",
+            "text": null,
+            "match": "normalized",
+            "control": null,
+            "pattern": null,
+            "operands": [
+              {
+                "kind": "text_present",
+                "text": "Access denied",
+                "match": "contains",
+                "control": null,
+                "pattern": null,
+                "operands": [],
+                "note": null
+              },
+              {
+                "kind": "text_present",
+                "text": "restricted",
+                "match": "contains",
+                "control": null,
+                "pattern": null,
+                "operands": [],
+                "note": null
+              }
+            ],
+            "note": null
+          }
+        ],
+        "note": null
+      },
+      "message": "The operator role is not permitted to view this member record.",
+      "recovery": null,
+      "applies_to_steps": null
+    },
+    {
+      "code": "VALIDATION_REJECTED",
+      "classification": "business_outcome",
+      "detect": {
+        "kind": "any_of",
+        "text": null,
+        "match": "normalized",
+        "control": null,
+        "pattern": null,
+        "operands": [
+          {
+            "kind": "text_present",
+            "text": "MCB-0101",
+            "match": "contains",
+            "control": null,
+            "pattern": null,
+            "operands": [],
+            "note": null
+          },
+          {
+            "kind": "text_present",
+            "text": "MCB-0102",
+            "match": "contains",
+            "control": null,
+            "pattern": null,
+            "operands": [],
+            "note": null
+          },
+          {
+            "kind": "text_present",
+            "text": "MCB-0103",
+            "match": "contains",
+            "control": null,
+            "pattern": null,
+            "operands": [],
+            "note": null
+          },
+          {
+            "kind": "text_present",
+            "text": "is required.",
+            "match": "contains",
+            "control": null,
+            "pattern": null,
+            "operands": [],
+            "note": null
+          },
+          {
+            "kind": "text_present",
+            "text": "must be at least",
+            "match": "contains",
+            "control": null,
+            "pattern": null,
+            "operands": [],
+            "note": null
+          }
+        ],
+        "note": null
+      },
+      "message": "The application rejected the submitted values.",
+      "recovery": null,
+      "applies_to_steps": null
+    },
+    {
+      "code": "POSTING_UNAVAILABLE",
+      "classification": "business_outcome",
+      "detect": {
+        "kind": "text_present",
+        "text": "MCB-0199",
+        "match": "contains",
+        "control": null,
+        "pattern": null,
+        "operands": [],
+        "note": null
+      },
+      "message": "The host declined the posting; it is temporarily unavailable.",
+      "recovery": null,
+      "applies_to_steps": null
+    },
+    {
+      "code": "MAINTENANCE_INTERSTITIAL",
+      "classification": "recoverable",
+      "detect": {
+        "kind": "text_present",
+        "text": "System Maintenance Notice",
+        "match": "contains",
+        "control": null,
+        "pattern": null,
+        "operands": [],
+        "note": null
+      },
+      "message": "A maintenance notice interrupted the flow.",
+      "recovery": {
+        "steps": [
+          {
+            "index": 0,
+            "intent": "Acknowledge the maintenance notice",
+            "action": "click",
+            "target": {
+              "description": "button 'Acknowledge'",
+              "strategies": [
+                {
+                  "kind": "label_text",
+                  "rank": 0,
+                  "confidence": 0.9,
+                  "role": "button",
+                  "name": null,
+                  "label": {
+                    "mode": "normalized",
+                    "value": "Acknowledge"
+                  },
+                  "anchor": null,
+                  "attr": null,
+                  "attr_value": null,
+                  "css": null,
+                  "ordinal": null,
+                  "within_text": null
+                },
+                {
+                  "kind": "ax_role_name",
+                  "rank": 1,
+                  "confidence": 0.8,
+                  "role": "button",
+                  "name": {
+                    "mode": "normalized",
+                    "value": "Acknowledge"
+                  },
+                  "label": null,
+                  "anchor": null,
+                  "attr": null,
+                  "attr_value": null,
+                  "css": null,
+                  "ordinal": null,
+                  "within_text": null
+                }
+              ],
+              "frame_path": [],
+              "allow_fallback": true
+            },
+            "value": null,
+            "url": null,
+            "key": null,
+            "output": null,
+            "wait": {
+              "before_ms": 0,
+              "settle": true,
+              "timeout_ms": 12000,
+              "until": null
+            },
+            "checkpoint": null,
+            "risk": "safe",
+            "optional": false
+          }
+        ],
+        "retry_step": true,
+        "max_attempts": 2
+      },
+      "applies_to_steps": null
+    },
+    {
+      "code": "SESSION_EXPIRED",
+      "classification": "hard_failure",
+      "detect": {
+        "kind": "any_of",
+        "text": null,
+        "match": "normalized",
+        "control": null,
+        "pattern": null,
+        "operands": [
+          {
+            "kind": "text_present",
+            "text": "Your session has expired",
+            "match": "contains",
+            "control": null,
+            "pattern": null,
+            "operands": [],
+            "note": null
+          },
+          {
+            "kind": "text_present",
+            "text": "session has expired",
+            "match": "contains",
+            "control": null,
+            "pattern": null,
+            "operands": [],
+            "note": null
+          }
+        ],
+        "note": null
+      },
+      "message": "The application session expired; re-authentication is required.",
+      "recovery": null,
+      "applies_to_steps": null
+    },
+    {
+      "code": "APP_ERROR",
+      "classification": "hard_failure",
+      "detect": {
+        "kind": "any_of",
+        "text": null,
+        "match": "normalized",
+        "control": null,
+        "pattern": null,
+        "operands": [
+          {
+            "kind": "text_present",
+            "text": "Unexpected system error",
+            "match": "contains",
+            "control": null,
+            "pattern": null,
+            "operands": [],
+            "note": null
+          },
+          {
+            "kind": "text_present",
+            "text": "MCB-500",
+            "match": "contains",
+            "control": null,
+            "pattern": null,
+            "operands": [],
+            "note": null
+          }
+        ],
+        "note": null
+      },
+      "message": "The application returned an unexpected system error.",
+      "recovery": null,
+      "applies_to_steps": null
+    }
+  ],
+  "steps": [
+    {
+      "index": 0,
+      "intent": "act on Operator ID",
+      "action": "type",
+      "target": {
+        "description": "textbox 'Operator ID'",
+        "strategies": [
+          {
+            "kind": "label_text",
+            "rank": 0,
+            "confidence": 0.85,
+            "role": "textbox",
+            "name": null,
+            "label": {
+              "mode": "normalized",
+              "value": "Operator ID"
+            },
+            "anchor": null,
+            "attr": null,
+            "attr_value": null,
+            "css": null,
+            "ordinal": null,
+            "within_text": null
+          },
+          {
+            "kind": "anchor_relative",
+            "rank": 1,
+            "confidence": 0.7,
+            "role": "textbox",
+            "name": null,
+            "label": null,
+            "anchor": {
+              "anchor_text": "Operator ID",
+              "anchor_match": "normalized",
+              "container_role": "row",
+              "column_header": null,
+              "cell_index": 1
+            },
+            "attr": null,
+            "attr_value": null,
+            "css": null,
+            "ordinal": null,
+            "within_text": null
+          },
+          {
+            "kind": "dom_attr",
+            "rank": 2,
+            "confidence": 0.6,
+            "role": null,
+            "name": null,
+            "label": null,
+            "anchor": null,
+            "attr": "name",
+            "attr_value": "ctl00$Logon$txtOperator",
+            "css": null,
+            "ordinal": null,
+            "within_text": null
+          },
+          {
+            "kind": "dom_css",
+            "rank": 3,
+            "confidence": 0.35,
+            "role": null,
+            "name": null,
+            "label": null,
+            "anchor": null,
+            "attr": null,
+            "attr_value": null,
+            "css": "tbody > tr:nth-of-type(2) > td:nth-of-type(2) > input",
+            "ordinal": null,
+            "within_text": null
+          }
+        ],
+        "frame_path": [],
+        "allow_fallback": true
+      },
+      "value": {
+        "source": "secret",
+        "literal": null,
+        "ref": "MCB_OPERATOR"
+      },
+      "url": null,
+      "key": null,
+      "output": null,
+      "wait": {
+        "before_ms": 0,
+        "settle": true,
+        "timeout_ms": 12000,
+        "until": null
+      },
+      "checkpoint": null,
+      "risk": "elevated",
+      "optional": false
+    },
+    {
+      "index": 1,
+      "intent": "act on Password",
+      "action": "type",
+      "target": {
+        "description": "textbox 'Password'",
+        "strategies": [
+          {
+            "kind": "label_text",
+            "rank": 0,
+            "confidence": 0.85,
+            "role": "textbox",
+            "name": null,
+            "label": {
+              "mode": "normalized",
+              "value": "Password"
+            },
+            "anchor": null,
+            "attr": null,
+            "attr_value": null,
+            "css": null,
+            "ordinal": null,
+            "within_text": null
+          },
+          {
+            "kind": "anchor_relative",
+            "rank": 1,
+            "confidence": 0.7,
+            "role": "textbox",
+            "name": null,
+            "label": null,
+            "anchor": {
+              "anchor_text": "Password",
+              "anchor_match": "normalized",
+              "container_role": "row",
+              "column_header": null,
+              "cell_index": 1
+            },
+            "attr": null,
+            "attr_value": null,
+            "css": null,
+            "ordinal": null,
+            "within_text": null
+          },
+          {
+            "kind": "dom_attr",
+            "rank": 2,
+            "confidence": 0.6,
+            "role": null,
+            "name": null,
+            "label": null,
+            "anchor": null,
+            "attr": "name",
+            "attr_value": "ctl00$Logon$txtPassword",
+            "css": null,
+            "ordinal": null,
+            "within_text": null
+          },
+          {
+            "kind": "dom_css",
+            "rank": 3,
+            "confidence": 0.35,
+            "role": null,
+            "name": null,
+            "label": null,
+            "anchor": null,
+            "attr": null,
+            "attr_value": null,
+            "css": "tbody > tr:nth-of-type(3) > td:nth-of-type(2) > input",
+            "ordinal": null,
+            "within_text": null
+          }
+        ],
+        "frame_path": [],
+        "allow_fallback": true
+      },
+      "value": {
+        "source": "secret",
+        "literal": null,
+        "ref": "MCB_PASSWORD"
+      },
+      "url": null,
+      "key": null,
+      "output": null,
+      "wait": {
+        "before_ms": 0,
+        "settle": true,
+        "timeout_ms": 12000,
+        "until": null
+      },
+      "checkpoint": null,
+      "risk": "elevated",
+      "optional": false
+    },
+    {
+      "index": 2,
+      "intent": "act on Sign On",
+      "action": "click",
+      "target": {
+        "description": "button 'Sign On'",
+        "strategies": [
+          {
+            "kind": "ax_role_name",
+            "rank": 0,
+            "confidence": 0.95,
+            "role": "button",
+            "name": {
+              "mode": "normalized",
+              "value": "Sign On"
+            },
+            "label": null,
+            "anchor": null,
+            "attr": null,
+            "attr_value": null,
+            "css": null,
+            "ordinal": null,
+            "within_text": null
+          },
+          {
+            "kind": "label_text",
+            "rank": 1,
+            "confidence": 0.85,
+            "role": "button",
+            "name": null,
+            "label": {
+              "mode": "normalized",
+              "value": "Sign On"
+            },
+            "anchor": null,
+            "attr": null,
+            "attr_value": null,
+            "css": null,
+            "ordinal": null,
+            "within_text": null
+          },
+          {
+            "kind": "anchor_relative",
+            "rank": 2,
+            "confidence": 0.7,
+            "role": "button",
+            "name": null,
+            "label": null,
+            "anchor": {
+              "anchor_text": " | ",
+              "anchor_match": "normalized",
+              "container_role": "row",
+              "column_header": null,
+              "cell_index": 1
+            },
+            "attr": null,
+            "attr_value": null,
+            "css": null,
+            "ordinal": null,
+            "within_text": null
+          },
+          {
+            "kind": "dom_attr",
+            "rank": 3,
+            "confidence": 0.6,
+            "role": null,
+            "name": null,
+            "label": null,
+            "anchor": null,
+            "attr": "name",
+            "attr_value": "ctl00$Logon$btnSignOn",
+            "css": null,
+            "ordinal": null,
+            "within_text": null
+          },
+          {
+            "kind": "dom_css",
+            "rank": 4,
+            "confidence": 0.35,
+            "role": null,
+            "name": null,
+            "label": null,
+            "anchor": null,
+            "attr": null,
+            "attr_value": null,
+            "css": "tbody > tr:nth-of-type(4) > td:nth-of-type(2) > input",
+            "ordinal": null,
+            "within_text": null
+          }
+        ],
+        "frame_path": [],
+        "allow_fallback": true
+      },
+      "value": null,
+      "url": null,
+      "key": null,
+      "output": null,
+      "wait": {
+        "before_ms": 0,
+        "settle": true,
+        "timeout_ms": 12000,
+        "until": {
+          "kind": "text_present",
+          "text": "Home > Member Inquiry",
+          "match": "normalized",
+          "control": null,
+          "pattern": null,
+          "operands": [],
+          "note": "state reached after this step"
+        }
+      },
+      "checkpoint": {
+        "kind": "text_present",
+        "text": "Home > Member Inquiry",
+        "match": "normalized",
+        "control": null,
+        "pattern": null,
+        "operands": [],
+        "note": "state reached after this step"
+      },
+      "risk": "elevated",
+      "optional": false
+    },
+    {
+      "index": 3,
+      "intent": "act on Member ID",
+      "action": "type",
+      "target": {
+        "description": "textbox 'Member ID'",
+        "strategies": [
+          {
+            "kind": "label_text",
+            "rank": 0,
+            "confidence": 0.85,
+            "role": "textbox",
+            "name": null,
+            "label": {
+              "mode": "normalized",
+              "value": "Member ID"
+            },
+            "anchor": null,
+            "attr": null,
+            "attr_value": null,
+            "css": null,
+            "ordinal": null,
+            "within_text": null
+          },
+          {
+            "kind": "anchor_relative",
+            "rank": 1,
+            "confidence": 0.7,
+            "role": "textbox",
+            "name": null,
+            "label": null,
+            "anchor": {
+              "anchor_text": "Member ID",
+              "anchor_match": "normalized",
+              "container_role": "row",
+              "column_header": null,
+              "cell_index": 1
+            },
+            "attr": null,
+            "attr_value": null,
+            "css": null,
+            "ordinal": null,
+            "within_text": null
+          },
+          {
+            "kind": "dom_attr",
+            "rank": 2,
+            "confidence": 0.6,
+            "role": null,
+            "name": null,
+            "label": null,
+            "anchor": null,
+            "attr": "name",
+            "attr_value": "ctl00$MainContent$txtMemberId",
+            "css": null,
+            "ordinal": null,
+            "within_text": null
+          },
+          {
+            "kind": "dom_css",
+            "rank": 3,
+            "confidence": 0.35,
+            "role": null,
+            "name": null,
+            "label": null,
+            "anchor": null,
+            "attr": null,
+            "attr_value": null,
+            "css": "tbody > tr:nth-of-type(2) > td:nth-of-type(2) > input",
+            "ordinal": null,
+            "within_text": null
+          }
+        ],
+        "frame_path": [
+          "mcbmain"
+        ],
+        "allow_fallback": true
+      },
+      "value": {
+        "source": "param",
+        "literal": null,
+        "ref": "member_id"
+      },
+      "url": null,
+      "key": null,
+      "output": null,
+      "wait": {
+        "before_ms": 0,
+        "settle": true,
+        "timeout_ms": 12000,
+        "until": null
+      },
+      "checkpoint": null,
+      "risk": "elevated",
+      "optional": false
+    },
+    {
+      "index": 4,
+      "intent": "act on Search",
+      "action": "click",
+      "target": {
+        "description": "button 'Search'",
+        "strategies": [
+          {
+            "kind": "ax_role_name",
+            "rank": 0,
+            "confidence": 0.95,
+            "role": "button",
+            "name": {
+              "mode": "normalized",
+              "value": "Search"
+            },
+            "label": null,
+            "anchor": null,
+            "attr": null,
+            "attr_value": null,
+            "css": null,
+            "ordinal": null,
+            "within_text": null
+          },
+          {
+            "kind": "label_text",
+            "rank": 1,
+            "confidence": 0.85,
+            "role": "button",
+            "name": null,
+            "label": {
+              "mode": "normalized",
+              "value": "Search"
+            },
+            "anchor": null,
+            "attr": null,
+            "attr_value": null,
+            "css": null,
+            "ordinal": null,
+            "within_text": null
+          },
+          {
+            "kind": "dom_attr",
+            "rank": 2,
+            "confidence": 0.6,
+            "role": null,
+            "name": null,
+            "label": null,
+            "anchor": null,
+            "attr": "name",
+            "attr_value": "ctl00$MainContent$btnSearch",
+            "css": null,
+            "ordinal": null,
+            "within_text": null
+          },
+          {
+            "kind": "dom_css",
+            "rank": 3,
+            "confidence": 0.35,
+            "role": null,
+            "name": null,
+            "label": null,
+            "anchor": null,
+            "attr": null,
+            "attr_value": null,
+            "css": "tbody > tr:nth-of-type(3) > td:nth-of-type(2) > input:nth-of-type(1)",
+            "ordinal": null,
+            "within_text": null
+          }
+        ],
+        "frame_path": [
+          "mcbmain"
+        ],
+        "allow_fallback": true
+      },
+      "value": null,
+      "url": null,
+      "key": null,
+      "output": null,
+      "wait": {
+        "before_ms": 0,
+        "settle": true,
+        "timeout_ms": 12000,
+        "until": {
+          "kind": "text_present",
+          "text": "Home > Member Inquiry > Detail",
+          "match": "normalized",
+          "control": null,
+          "pattern": null,
+          "operands": [],
+          "note": "state reached after this step"
+        }
+      },
+      "checkpoint": {
+        "kind": "text_present",
+        "text": "Home > Member Inquiry > Detail",
+        "match": "normalized",
+        "control": null,
+        "pattern": null,
+        "operands": [],
+        "note": "state reached after this step"
+      },
+      "risk": "elevated",
+      "optional": false
+    },
+    {
+      "index": 5,
+      "intent": "act on Open Sub-Account",
+      "action": "click",
+      "target": {
+        "description": "link 'Open Sub-Account'",
+        "strategies": [
+          {
+            "kind": "ax_role_name",
+            "rank": 0,
+            "confidence": 0.95,
+            "role": "link",
+            "name": {
+              "mode": "normalized",
+              "value": "Open Sub-Account"
+            },
+            "label": null,
+            "anchor": null,
+            "attr": null,
+            "attr_value": null,
+            "css": null,
+            "ordinal": null,
+            "within_text": null
+          },
+          {
+            "kind": "label_text",
+            "rank": 1,
+            "confidence": 0.85,
+            "role": "link",
+            "name": null,
+            "label": {
+              "mode": "normalized",
+              "value": "Open Sub-Account"
+            },
+            "anchor": null,
+            "attr": null,
+            "attr_value": null,
+            "css": null,
+            "ordinal": null,
+            "within_text": null
+          },
+          {
+            "kind": "dom_css",
+            "rank": 2,
+            "confidence": 0.35,
+            "role": null,
+            "name": null,
+            "label": null,
+            "anchor": null,
+            "attr": null,
+            "attr_value": null,
+            "css": "tbody > tr > td > a:nth-of-type(1)",
+            "ordinal": null,
+            "within_text": null
+          }
+        ],
+        "frame_path": [
+          "mcbmain"
+        ],
+        "allow_fallback": true
+      },
+      "value": null,
+      "url": null,
+      "key": null,
+      "output": null,
+      "wait": {
+        "before_ms": 0,
+        "settle": true,
+        "timeout_ms": 12000,
+        "until": {
+          "kind": "text_present",
+          "text": "Open Sub-Account",
+          "match": "normalized",
+          "control": null,
+          "pattern": null,
+          "operands": [],
+          "note": "state reached after this step"
+        }
+      },
+      "checkpoint": {
+        "kind": "text_present",
+        "text": "Open Sub-Account",
+        "match": "normalized",
+        "control": null,
+        "pattern": null,
+        "operands": [],
+        "note": "state reached after this step"
+      },
+      "risk": "safe",
+      "optional": false
+    },
+    {
+      "index": 6,
+      "intent": "act on Account Type",
+      "action": "select",
+      "target": {
+        "description": "combobox 'Account Type'",
+        "strategies": [
+          {
+            "kind": "label_text",
+            "rank": 0,
+            "confidence": 0.85,
+            "role": "combobox",
+            "name": null,
+            "label": {
+              "mode": "normalized",
+              "value": "Account Type"
+            },
+            "anchor": null,
+            "attr": null,
+            "attr_value": null,
+            "css": null,
+            "ordinal": null,
+            "within_text": null
+          },
+          {
+            "kind": "anchor_relative",
+            "rank": 1,
+            "confidence": 0.7,
+            "role": "combobox",
+            "name": null,
+            "label": null,
+            "anchor": {
+              "anchor_text": "Account Type",
+              "anchor_match": "normalized",
+              "container_role": "row",
+              "column_header": null,
+              "cell_index": 1
+            },
+            "attr": null,
+            "attr_value": null,
+            "css": null,
+            "ordinal": null,
+            "within_text": null
+          },
+          {
+            "kind": "dom_attr",
+            "rank": 2,
+            "confidence": 0.6,
+            "role": null,
+            "name": null,
+            "label": null,
+            "anchor": null,
+            "attr": "name",
+            "attr_value": "ctl00$MainContent$ddlAcctType",
+            "css": null,
+            "ordinal": null,
+            "within_text": null
+          },
+          {
+            "kind": "dom_css",
+            "rank": 3,
+            "confidence": 0.35,
+            "role": null,
+            "name": null,
+            "label": null,
+            "anchor": null,
+            "attr": null,
+            "attr_value": null,
+            "css": "tbody > tr:nth-of-type(3) > td:nth-of-type(2) > select",
+            "ordinal": null,
+            "within_text": null
+          }
+        ],
+        "frame_path": [
+          "mcbmain"
+        ],
+        "allow_fallback": true
+      },
+      "value": {
+        "source": "param",
+        "literal": null,
+        "ref": "account_type"
+      },
+      "url": null,
+      "key": null,
+      "output": null,
+      "wait": {
+        "before_ms": 0,
+        "settle": true,
+        "timeout_ms": 12000,
+        "until": null
+      },
+      "checkpoint": null,
+      "risk": "elevated",
+      "optional": false
+    },
+    {
+      "index": 7,
+      "intent": "act on Nickname",
+      "action": "type",
+      "target": {
+        "description": "textbox 'Nickname'",
+        "strategies": [
+          {
+            "kind": "label_text",
+            "rank": 0,
+            "confidence": 0.85,
+            "role": "textbox",
+            "name": null,
+            "label": {
+              "mode": "normalized",
+              "value": "Nickname"
+            },
+            "anchor": null,
+            "attr": null,
+            "attr_value": null,
+            "css": null,
+            "ordinal": null,
+            "within_text": null
+          },
+          {
+            "kind": "anchor_relative",
+            "rank": 1,
+            "confidence": 0.7,
+            "role": "textbox",
+            "name": null,
+            "label": null,
+            "anchor": {
+              "anchor_text": "Nickname",
+              "anchor_match": "normalized",
+              "container_role": "row",
+              "column_header": null,
+              "cell_index": 1
+            },
+            "attr": null,
+            "attr_value": null,
+            "css": null,
+            "ordinal": null,
+            "within_text": null
+          },
+          {
+            "kind": "dom_attr",
+            "rank": 2,
+            "confidence": 0.6,
+            "role": null,
+            "name": null,
+            "label": null,
+            "anchor": null,
+            "attr": "name",
+            "attr_value": "ctl00$MainContent$txtNickname",
+            "css": null,
+            "ordinal": null,
+            "within_text": null
+          },
+          {
+            "kind": "dom_css",
+            "rank": 3,
+            "confidence": 0.35,
+            "role": null,
+            "name": null,
+            "label": null,
+            "anchor": null,
+            "attr": null,
+            "attr_value": null,
+            "css": "tbody > tr:nth-of-type(4) > td:nth-of-type(2) > input",
+            "ordinal": null,
+            "within_text": null
+          }
+        ],
+        "frame_path": [
+          "mcbmain"
+        ],
+        "allow_fallback": true
+      },
+      "value": {
+        "source": "param",
+        "literal": null,
+        "ref": "nickname"
+      },
+      "url": null,
+      "key": null,
+      "output": null,
+      "wait": {
+        "before_ms": 0,
+        "settle": true,
+        "timeout_ms": 12000,
+        "until": null
+      },
+      "checkpoint": null,
+      "risk": "elevated",
+      "optional": false
+    },
+    {
+      "index": 8,
+      "intent": "act on Initial Deposit",
+      "action": "type",
+      "target": {
+        "description": "textbox 'Initial Deposit'",
+        "strategies": [
+          {
+            "kind": "label_text",
+            "rank": 0,
+            "confidence": 0.85,
+            "role": "textbox",
+            "name": null,
+            "label": {
+              "mode": "normalized",
+              "value": "Initial Deposit"
+            },
+            "anchor": null,
+            "attr": null,
+            "attr_value": null,
+            "css": null,
+            "ordinal": null,
+            "within_text": null
+          },
+          {
+            "kind": "anchor_relative",
+            "rank": 1,
+            "confidence": 0.7,
+            "role": "textbox",
+            "name": null,
+            "label": null,
+            "anchor": {
+              "anchor_text": "Initial Deposit",
+              "anchor_match": "normalized",
+              "container_role": "row",
+              "column_header": null,
+              "cell_index": 1
+            },
+            "attr": null,
+            "attr_value": null,
+            "css": null,
+            "ordinal": null,
+            "within_text": null
+          },
+          {
+            "kind": "dom_attr",
+            "rank": 2,
+            "confidence": 0.6,
+            "role": null,
+            "name": null,
+            "label": null,
+            "anchor": null,
+            "attr": "name",
+            "attr_value": "ctl00$MainContent$txtDeposit",
+            "css": null,
+            "ordinal": null,
+            "within_text": null
+          },
+          {
+            "kind": "dom_css",
+            "rank": 3,
+            "confidence": 0.35,
+            "role": null,
+            "name": null,
+            "label": null,
+            "anchor": null,
+            "attr": null,
+            "attr_value": null,
+            "css": "tbody > tr:nth-of-type(5) > td:nth-of-type(2) > input",
+            "ordinal": null,
+            "within_text": null
+          }
+        ],
+        "frame_path": [
+          "mcbmain"
+        ],
+        "allow_fallback": true
+      },
+      "value": {
+        "source": "param",
+        "literal": null,
+        "ref": "initial_deposit"
+      },
+      "url": null,
+      "key": null,
+      "output": null,
+      "wait": {
+        "before_ms": 0,
+        "settle": true,
+        "timeout_ms": 12000,
+        "until": null
+      },
+      "checkpoint": null,
+      "risk": "elevated",
+      "optional": false
+    },
+    {
+      "index": 9,
+      "intent": "act on Open Account",
+      "action": "click",
+      "target": {
+        "description": "button 'Open Account'",
+        "strategies": [
+          {
+            "kind": "ax_role_name",
+            "rank": 0,
+            "confidence": 0.95,
+            "role": "button",
+            "name": {
+              "mode": "normalized",
+              "value": "Open Account"
+            },
+            "label": null,
+            "anchor": null,
+            "attr": null,
+            "attr_value": null,
+            "css": null,
+            "ordinal": null,
+            "within_text": null
+          },
+          {
+            "kind": "label_text",
+            "rank": 1,
+            "confidence": 0.85,
+            "role": "button",
+            "name": null,
+            "label": {
+              "mode": "normalized",
+              "value": "Open Account"
+            },
+            "anchor": null,
+            "attr": null,
+            "attr_value": null,
+            "css": null,
+            "ordinal": null,
+            "within_text": null
+          },
+          {
+            "kind": "anchor_relative",
+            "rank": 2,
+            "confidence": 0.7,
+            "role": "button",
+            "name": null,
+            "label": null,
+            "anchor": {
+              "anchor_text": " | ",
+              "anchor_match": "normalized",
+              "container_role": "row",
+              "column_header": null,
+              "cell_index": 1
+            },
+            "attr": null,
+            "attr_value": null,
+            "css": null,
+            "ordinal": null,
+            "within_text": null
+          },
+          {
+            "kind": "dom_attr",
+            "rank": 3,
+            "confidence": 0.6,
+            "role": null,
+            "name": null,
+            "label": null,
+            "anchor": null,
+            "attr": "name",
+            "attr_value": "ctl00$MainContent$btnOpen",
+            "css": null,
+            "ordinal": null,
+            "within_text": null
+          },
+          {
+            "kind": "dom_css",
+            "rank": 4,
+            "confidence": 0.35,
+            "role": null,
+            "name": null,
+            "label": null,
+            "anchor": null,
+            "attr": null,
+            "attr_value": null,
+            "css": "tbody > tr:nth-of-type(6) > td:nth-of-type(2) > input",
+            "ordinal": null,
+            "within_text": null
+          }
+        ],
+        "frame_path": [
+          "mcbmain"
+        ],
+        "allow_fallback": true
+      },
+      "value": null,
+      "url": null,
+      "key": null,
+      "output": null,
+      "wait": {
+        "before_ms": 0,
+        "settle": true,
+        "timeout_ms": 12000,
+        "until": {
+          "kind": "all_of",
+          "text": null,
+          "match": "normalized",
+          "control": null,
+          "pattern": null,
+          "operands": [
+            {
+              "kind": "text_present",
+              "text": "Home > Member Inquiry > Detail > Confirmation",
+              "match": "normalized",
+              "control": null,
+              "pattern": null,
+              "operands": [],
+              "note": "state reached after this step"
+            },
+            {
+              "kind": "control_present",
+              "text": null,
+              "match": "normalized",
+              "control": {
+                "description": "source of output 'new_account_number'",
+                "strategies": [
+                  {
+                    "kind": "anchor_relative",
+                    "rank": 0,
+                    "confidence": 0.7,
+                    "role": "cell",
+                    "name": null,
+                    "label": null,
+                    "anchor": {
+                      "anchor_text": "New Account Number",
+                      "anchor_match": "normalized",
+                      "container_role": "row",
+                      "column_header": null,
+                      "cell_index": 1
+                    },
+                    "attr": null,
+                    "attr_value": null,
+                    "css": null,
+                    "ordinal": null,
+                    "within_text": null
+                  },
+                  {
+                    "kind": "dom_css",
+                    "rank": 1,
+                    "confidence": 0.35,
+                    "role": null,
+                    "name": null,
+                    "label": null,
+                    "anchor": null,
+                    "attr": null,
+                    "attr_value": null,
+                    "css": "table > tbody > tr:nth-of-type(2) > td:nth-of-type(2)",
+                    "ordinal": null,
+                    "within_text": null
+                  }
+                ],
+                "frame_path": [
+                  "mcbmain"
+                ],
+                "allow_fallback": true
+              },
+              "pattern": null,
+              "operands": [],
+              "note": "output new_account_number is readable"
+            },
+            {
+              "kind": "control_present",
+              "text": null,
+              "match": "normalized",
+              "control": {
+                "description": "source of output 'confirmation_number'",
+                "strategies": [
+                  {
+                    "kind": "anchor_relative",
+                    "rank": 0,
+                    "confidence": 0.7,
+                    "role": "cell",
+                    "name": null,
+                    "label": null,
+                    "anchor": {
+                      "anchor_text": "Confirmation No.",
+                      "anchor_match": "normalized",
+                      "container_role": "row",
+                      "column_header": null,
+                      "cell_index": 1
+                    },
+                    "attr": null,
+                    "attr_value": null,
+                    "css": null,
+                    "ordinal": null,
+                    "within_text": null
+                  },
+                  {
+                    "kind": "dom_css",
+                    "rank": 1,
+                    "confidence": 0.35,
+                    "role": null,
+                    "name": null,
+                    "label": null,
+                    "anchor": null,
+                    "attr": null,
+                    "attr_value": null,
+                    "css": "table > tbody > tr:nth-of-type(6) > td:nth-of-type(2)",
+                    "ordinal": null,
+                    "within_text": null
+                  }
+                ],
+                "frame_path": [
+                  "mcbmain"
+                ],
+                "allow_fallback": true
+              },
+              "pattern": null,
+              "operands": [],
+              "note": "output confirmation_number is readable"
+            }
+          ],
+          "note": "goal state reached"
+        }
+      },
+      "checkpoint": {
+        "kind": "all_of",
+        "text": null,
+        "match": "normalized",
+        "control": null,
+        "pattern": null,
+        "operands": [
+          {
+            "kind": "text_present",
+            "text": "Home > Member Inquiry > Detail > Confirmation",
+            "match": "normalized",
+            "control": null,
+            "pattern": null,
+            "operands": [],
+            "note": "state reached after this step"
+          },
+          {
+            "kind": "control_present",
+            "text": null,
+            "match": "normalized",
+            "control": {
+              "description": "source of output 'new_account_number'",
+              "strategies": [
+                {
+                  "kind": "anchor_relative",
+                  "rank": 0,
+                  "confidence": 0.7,
+                  "role": "cell",
+                  "name": null,
+                  "label": null,
+                  "anchor": {
+                    "anchor_text": "New Account Number",
+                    "anchor_match": "normalized",
+                    "container_role": "row",
+                    "column_header": null,
+                    "cell_index": 1
+                  },
+                  "attr": null,
+                  "attr_value": null,
+                  "css": null,
+                  "ordinal": null,
+                  "within_text": null
+                },
+                {
+                  "kind": "dom_css",
+                  "rank": 1,
+                  "confidence": 0.35,
+                  "role": null,
+                  "name": null,
+                  "label": null,
+                  "anchor": null,
+                  "attr": null,
+                  "attr_value": null,
+                  "css": "table > tbody > tr:nth-of-type(2) > td:nth-of-type(2)",
+                  "ordinal": null,
+                  "within_text": null
+                }
+              ],
+              "frame_path": [
+                "mcbmain"
+              ],
+              "allow_fallback": true
+            },
+            "pattern": null,
+            "operands": [],
+            "note": "output new_account_number is readable"
+          },
+          {
+            "kind": "control_present",
+            "text": null,
+            "match": "normalized",
+            "control": {
+              "description": "source of output 'confirmation_number'",
+              "strategies": [
+                {
+                  "kind": "anchor_relative",
+                  "rank": 0,
+                  "confidence": 0.7,
+                  "role": "cell",
+                  "name": null,
+                  "label": null,
+                  "anchor": {
+                    "anchor_text": "Confirmation No.",
+                    "anchor_match": "normalized",
+                    "container_role": "row",
+                    "column_header": null,
+                    "cell_index": 1
+                  },
+                  "attr": null,
+                  "attr_value": null,
+                  "css": null,
+                  "ordinal": null,
+                  "within_text": null
+                },
+                {
+                  "kind": "dom_css",
+                  "rank": 1,
+                  "confidence": 0.35,
+                  "role": null,
+                  "name": null,
+                  "label": null,
+                  "anchor": null,
+                  "attr": null,
+                  "attr_value": null,
+                  "css": "table > tbody > tr:nth-of-type(6) > td:nth-of-type(2)",
+                  "ordinal": null,
+                  "within_text": null
+                }
+              ],
+              "frame_path": [
+                "mcbmain"
+              ],
+              "allow_fallback": true
+            },
+            "pattern": null,
+            "operands": [],
+            "note": "output confirmation_number is readable"
+          }
+        ],
+        "note": "goal state reached"
+      },
+      "risk": "irreversible",
+      "optional": false
+    }
+  ],
+  "success_condition": {
+    "kind": "all_of",
+    "text": null,
+    "match": "normalized",
+    "control": null,
+    "pattern": null,
+    "operands": [
+      {
+        "kind": "text_present",
+        "text": "Home > Member Inquiry > Detail > Confirmation",
+        "match": "normalized",
+        "control": null,
+        "pattern": null,
+        "operands": [],
+        "note": "state reached after this step"
+      },
+      {
+        "kind": "control_present",
+        "text": null,
+        "match": "normalized",
+        "control": {
+          "description": "source of output 'new_account_number'",
+          "strategies": [
+            {
+              "kind": "anchor_relative",
+              "rank": 0,
+              "confidence": 0.7,
+              "role": "cell",
+              "name": null,
+              "label": null,
+              "anchor": {
+                "anchor_text": "New Account Number",
+                "anchor_match": "normalized",
+                "container_role": "row",
+                "column_header": null,
+                "cell_index": 1
+              },
+              "attr": null,
+              "attr_value": null,
+              "css": null,
+              "ordinal": null,
+              "within_text": null
+            },
+            {
+              "kind": "dom_css",
+              "rank": 1,
+              "confidence": 0.35,
+              "role": null,
+              "name": null,
+              "label": null,
+              "anchor": null,
+              "attr": null,
+              "attr_value": null,
+              "css": "table > tbody > tr:nth-of-type(2) > td:nth-of-type(2)",
+              "ordinal": null,
+              "within_text": null
+            }
+          ],
+          "frame_path": [
+            "mcbmain"
+          ],
+          "allow_fallback": true
+        },
+        "pattern": null,
+        "operands": [],
+        "note": "output new_account_number is readable"
+      },
+      {
+        "kind": "control_present",
+        "text": null,
+        "match": "normalized",
+        "control": {
+          "description": "source of output 'confirmation_number'",
+          "strategies": [
+            {
+              "kind": "anchor_relative",
+              "rank": 0,
+              "confidence": 0.7,
+              "role": "cell",
+              "name": null,
+              "label": null,
+              "anchor": {
+                "anchor_text": "Confirmation No.",
+                "anchor_match": "normalized",
+                "container_role": "row",
+                "column_header": null,
+                "cell_index": 1
+              },
+              "attr": null,
+              "attr_value": null,
+              "css": null,
+              "ordinal": null,
+              "within_text": null
+            },
+            {
+              "kind": "dom_css",
+              "rank": 1,
+              "confidence": 0.35,
+              "role": null,
+              "name": null,
+              "label": null,
+              "anchor": null,
+              "attr": null,
+              "attr_value": null,
+              "css": "table > tbody > tr:nth-of-type(6) > td:nth-of-type(2)",
+              "ordinal": null,
+              "within_text": null
+            }
+          ],
+          "frame_path": [
+            "mcbmain"
+          ],
+          "allow_fallback": true
+        },
+        "pattern": null,
+        "operands": [],
+        "note": "output confirmation_number is readable"
+      }
+    ],
+    "note": "goal state reached"
+  },
+  "policy": {
+    "max_risk": "irreversible",
+    "requires_approval_for_unattended": true,
+    "allowed_actions": [
+      "navigate",
+      "click",
+      "type",
+      "select",
+      "press",
+      "extract",
+      "wait",
+      "assert",
+      "finish"
+    ]
+  },
+  "approval": "draft",
+  "provenance": {
+    "discovery_run_id": "record_c5300798",
+    "recorded_at": "2026-09-18T14:12:43.116845Z",
+    "model": "oracle",
+    "raw_step_count": 11,
+    "surface_fingerprint": "d608c0971d3ddbfd",
+    "notes": "Recorded by walking the flow with a deterministic driver, not by an LLM discovery run: a local 7B could not complete this eleven-step flow (see REPORT.md section 7). The genuine LLM discovery run in this repo is member.savings_balance.lookup. This capability exists to exercise the replay-side guardrails -- risk classification, the approval gate, and validation outcomes."
+  },
+  "stability": {
+    "replays": 0,
+    "successes": 0,
+    "business_outcomes": 0,
+    "failures": 0,
+    "last_replay_at": null,
+    "fallback_counts": {}
+  },
+  "overlays": []
+}

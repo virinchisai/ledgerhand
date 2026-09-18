@@ -34,6 +34,10 @@ from .prompts import (
     build_system, build_user_prompt, render_readable, worth_goal_check,
 )
 
+#: Roles a person acts on, as opposed to reads. Mirrors prompts._is_actionable.
+_ACTIONABLE_ROLES = frozenset({"textbox", "button", "combobox", "listbox",
+                               "checkbox", "radio", "link", "menuitem"})
+
 _ACTION_MAP = {
     "click": ActionKind.CLICK,
     "type": ActionKind.TYPE,
@@ -125,14 +129,39 @@ class DiscoveryResult:
 
 
 def _screen_hash(obs: Observation) -> str:
-    """Identity of a screen, for progress detection.
+    """Identity of a screen *and how far through it we are*, for progress detection.
 
-    Deliberately coarse: the URL plus the set of control labels. A page whose
-    only change is a spinner or a timestamp is *not* progress, and treating it
-    as progress is how agent loops spin.
+    Coarse on content: the URL plus the set of control labels, so a page whose
+    only change is a spinner or a timestamp is not mistaken for progress.
+
+    But it also records which controls now hold a value, and that part is
+    load-bearing. Without it, filling a multi-field form looks identical to
+    being stuck: select a type, type a nickname, type an amount, and the screen
+    has "not changed" four times running -- which is exactly how the loop
+    concluded it was stuck one click away from finishing. Filling in a field is
+    progress. Retyping the same value into the same field is not, and still
+    reads as no change.
     """
-    payload = obs.url + "|" + "|".join(sorted(f"{n.role}:{n.label}" for n in obs.controls))
-    return hashlib.sha256(payload.encode()).hexdigest()[:16]
+    controls = sorted(f"{n.role}:{n.label}:{n.value}" for n in obs.controls)
+    return hashlib.sha256((obs.url + "|" + "|".join(controls)).encode()).hexdigest()[:16]
+
+
+def _screen_identity(obs: Observation) -> str:
+    """Which screen this is, ignoring what has been typed into it.
+
+    Distinct from _screen_hash on purpose. Progress detection must notice a
+    field being filled; the goal check must not -- "are the wanted values on
+    this screen" depends on the screen, not on its contents, so a form being
+    filled in is the *same* screen and must not be re-asked about.
+
+    Keeping these separate is worth real time. Re-asking cost ~130s per form
+    field, and worse, interleaving the two prompt shapes destroys the model's
+    cached prefix: consecutive navigation calls reuse it and run at ~150s,
+    while alternating nav/check pushed the same calls to ~520s. On CPU
+    inference, prompt *order* is a performance decision.
+    """
+    controls = sorted(f"{n.role}:{n.label}" for n in obs.controls)
+    return hashlib.sha256((obs.url + "|" + "|".join(controls)).encode()).hexdigest()[:16]
 
 
 class DiscoveryAgent:
@@ -228,6 +257,7 @@ class DiscoveryAgent:
         history: list[str] = []
         invalid_streak = 0
         seen_screens: list[str] = []
+        checked_screens: set[str] = set()
 
         for step in range(1, budget + 1):
             if time.monotonic() - started > self.gate.profile.max_run_seconds:
@@ -244,16 +274,29 @@ class DiscoveryAgent:
             # charging that to the progress detector reports "the app is not
             # responding" when the truth is "the model is not responding".
             # Those are tracked separately by invalid_streak.
-            if len(seen_screens) > self.no_progress_limit and len(set(seen_screens[-self.no_progress_limit - 1:])) == 1:
+            window = seen_screens[-self.no_progress_limit - 1:]
+            if len(seen_screens) > self.no_progress_limit and len(set(window)) == 1:
                 result.status = "stuck"
                 result.reason = (f"no state change across {self.no_progress_limit + 1} consecutive "
                                  f"steps on {obs.url}")
                 break
+            # Oscillation is not progress. Flipping a dropdown between two
+            # values changes the screen every time, so a naive "did anything
+            # change" test reads it as forward motion and the loop will happily
+            # cycle until its budget runs out. Revisiting states already seen,
+            # with no new one among them, is the same dead end wearing a hat.
+            if len(seen_screens) > self.no_progress_limit * 2:
+                recent = seen_screens[-self.no_progress_limit * 2:]
+                if len(set(recent)) <= 2 and len(set(recent)) < len(recent):
+                    result.status = "stuck"
+                    result.reason = (f"cycling between {len(set(recent))} states over "
+                                     f"{len(recent)} steps on {obs.url}")
+                    break
 
             view = self._view(obs)
 
             # Ask the easy question first: are we already there?
-            bindings = self._goal_check(goal, view)
+            bindings = self._goal_check(goal, view, asked=checked_screens)
             if bindings is not None:
                 live = {name: obs.node(node.handle) or node for name, node in bindings.items()}
                 result.output_bindings = live
@@ -359,7 +402,9 @@ class DiscoveryAgent:
             view.content_url = self.redactor.scrub(view.content_url)
         return view
 
-    def _goal_check(self, goal: GoalSpec, view: Observation) -> dict[str, UINode] | None:
+    def _goal_check(
+        self, goal: GoalSpec, view: Observation, *, asked: set[str] | None = None
+    ) -> dict[str, UINode] | None:
         """Ask only "are the wanted values on this screen, and where?".
 
         This is the half of the problem the navigation question was smothering.
@@ -374,6 +419,12 @@ class DiscoveryAgent:
         """
         if not goal.outputs or not worth_goal_check(view):
             return None
+        # Do not re-ask about a screen already ruled out. On CPU inference one
+        # goal check costs minutes, and the answer for an unchanged screen
+        # cannot have changed either.
+        digest = _screen_identity(view)
+        if asked is not None and digest in asked:
+            return None
         reply = self.llm.decide(
             GOAL_CHECK_SYSTEM,
             build_goal_check(goal.goal,
@@ -385,14 +436,32 @@ class DiscoveryAgent:
                             error=reply.error)
         if not reply.data:
             return None
+        # Where the readable content actually lives. A value bound to the
+        # navigation chrome is a miss dressed up as a hit -- and because a
+        # partial hit is retried rather than ruled out, one bogus binding makes
+        # the check re-fire on every later step.
+        frames = [tuple(n.frame_path) for n in view.controls
+                  if n.text and n.role not in _ACTIONABLE_ROLES]
+        content_frame = max(set(frames), key=frames.count) if frames else ()
+
         bindings: dict[str, UINode] = {}
         for want in goal.outputs:
             handle = str(reply.data.get(want.name, "none")).strip().strip("[]").strip()
             node = view.node(handle) if handle and handle.lower() != "none" else None
             if node is None or not (node.text or node.value):
-                return None
+                continue
+            if frames and tuple(node.frame_path) != content_frame:
+                continue
             bindings[want.name] = node
-        return bindings
+        if len(bindings) == len(goal.outputs):
+            return bindings
+        # Only rule the screen out when *nothing* matched. A partial hit means
+        # we are on the right screen and the model missed one value -- locking
+        # it out would guarantee the run never finishes, having already done
+        # the irreversible thing it came to do.
+        if asked is not None and not bindings:
+            asked.add(digest)
+        return None
 
     def _ask(self, goal: GoalSpec, view: Observation, history: list[str]) -> LLMReply:
         """The navigation question: one action, no output binding."""

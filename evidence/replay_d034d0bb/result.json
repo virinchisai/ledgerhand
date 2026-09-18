@@ -1,0 +1,117 @@
+{
+  "capability": "member.savings_balance.lookup@v1",
+  "tenant": "firstvalley",
+  "run_id": "replay_d034d0bb",
+  "status": "business_outcome",
+  "outputs": {},
+  "outcome_code": "ACCESS_DENIED",
+  "outcome_class": "business_outcome",
+  "message": "The operator role is not permitted to view this member record.",
+  "failure": null,
+  "intervention_id": null,
+  "steps": [
+    {
+      "index": 0,
+      "intent": "Enter operator ID",
+      "action": "type",
+      "status": "ok",
+      "started_at": "2026-09-18T14:13:31.797411Z",
+      "duration_ms": 2476,
+      "locator": {
+        "control": "textbox 'Operator ID'",
+        "resolved_by": "label_text",
+        "rank": 0,
+        "candidates_seen": 1,
+        "used_fallback": false,
+        "note": "rank 0 textbox labelled 'Operator ID': matched"
+      },
+      "checkpoint": null,
+      "checkpoint_passed": null,
+      "recoveries": [],
+      "detail": null,
+      "screenshot": null
+    },
+    {
+      "index": 1,
+      "intent": "enter password",
+      "action": "type",
+      "status": "ok",
+      "started_at": "2026-09-18T14:13:34.274332Z",
+      "duration_ms": 2342,
+      "locator": {
+        "control": "textbox 'Password'",
+        "resolved_by": "label_text",
+        "rank": 0,
+        "candidates_seen": 1,
+        "used_fallback": false,
+        "note": "rank 0 textbox labelled 'Password': matched"
+      },
+      "checkpoint": null,
+      "checkpoint_passed": null,
+      "recoveries": [],
+      "detail": null,
+      "screenshot": null
+    },
+    {
+      "index": 2,
+      "intent": "submit sign-on",
+      "action": "press",
+      "status": "ok",
+      "started_at": "2026-09-18T14:13:36.617074Z",
+      "duration_ms": 153,
+      "locator": null,
+      "checkpoint": "text_present('Home > Member Inquiry')",
+      "checkpoint_passed": true,
+      "recoveries": [],
+      "detail": null,
+      "screenshot": null
+    },
+    {
+      "index": 3,
+      "intent": "enter member ID for search",
+      "action": "type",
+      "status": "ok",
+      "started_at": "2026-09-18T14:13:36.770608Z",
+      "duration_ms": 2195,
+      "locator": {
+        "control": "textbox 'Member ID'",
+        "resolved_by": "label_text",
+        "rank": 0,
+        "candidates_seen": 1,
+        "used_fallback": false,
+        "note": "rank 0 textbox labelled 'Member ID': matched"
+      },
+      "checkpoint": null,
+      "checkpoint_passed": null,
+      "recoveries": [],
+      "detail": null,
+      "screenshot": null
+    },
+    {
+      "index": 4,
+      "intent": "search for member",
+      "action": "click",
+      "status": "ok",
+      "started_at": "2026-09-18T14:13:38.966099Z",
+      "duration_ms": 0,
+      "locator": {
+        "control": "button 'Search'",
+        "resolved_by": "ax_role_name",
+        "rank": 0,
+        "candidates_seen": 1,
+        "used_fallback": false,
+        "note": "rank 0 button[name~='Search']: matched"
+      },
+      "checkpoint": null,
+      "checkpoint_passed": null,
+      "recoveries": [],
+      "detail": null,
+      "screenshot": null
+    }
+  ],
+  "started_at": "2026-09-18T14:13:31.263629Z",
+  "duration_ms": 21881,
+  "evidence_dir": "/Users/virinchisai/ledgerhand/evidence/replay_d034d0bb",
+  "drift_detected": false,
+  "drift_notes": []
+}

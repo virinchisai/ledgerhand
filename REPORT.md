@@ -262,7 +262,12 @@ commits until a click), and a click is classified from what the control is
 `confirm`, not `block` — blocking would rule out the flows institutions most want
 automated. So the same capability behaves differently by context: discovery is
 attended by definition and proceeds; unattended replay escalates. An artifact
-containing an irreversible step will not run unattended unless `approved`.
+containing an irreversible step will not run unattended unless `approved` — and
+approval is what satisfies the per-step gate too, otherwise it would gate entry
+to a run that then escalates at the very step approval was granted for.
+`member.subaccount.open`, whose last click opens an account, demonstrates the
+whole ladder in `/evidence`: draft+unattended refused before touching the UI,
+attended succeeds, approved+unattended succeeds, revoked refused.
 
 **Data.** Steps carry references, not values, and the same holds in reverse
 (§2). Content the *application* displays is a separate question: a member id is
@@ -299,9 +304,25 @@ avoid. Doing it responsibly needs a policy story I would rather build
 deliberately — a single step, inside the allowlist, never irreversible, recorded
 as evidence, requiring re-approval to enter the artifact.
 
-**Next, in order.** (1) A second capability with an irreversible step — opening a
-sub-account, which the target already supports end to end — to exercise the
-approval gate through a real flow rather than a unit test. (2) Session pooling:
+**One limitation worth stating rather than burying.** The discovery loop
+completed the six-step lookup flow on a local 7B, repeatedly. It did *not*
+complete the eleven-step account-opening flow: four attempts, each dying at a
+different late step — a 900s timeout on the largest prompt, a dropdown reported
+by its value attribute rather than its label so the model re-selected in a loop,
+and finally oscillating between two dropdown states with the submit button on
+screen. Each of those was a real defect and each is fixed, but the honest
+reading is that this loop's ceiling on a 7B at ~1.4 tok/s is somewhere around
+six to eight decisions, not eleven. A frontier model would very likely walk it;
+the point of using a weak one was to find exactly this kind of edge, and the
+failed run is kept in `/evidence` rather than deleted. So
+`member.subaccount.open` was recorded by walking the flow deterministically
+(`scripts/record_reference_capability.py`), its provenance says so, and it earns
+its place by exercising the replay-side guardrails rather than by pretending to
+be a discovery run.
+
+**Next, in order.** (1) Re-attempt that flow on a stronger model, which the
+provider seam already supports, to confirm the ceiling is the model rather than
+the loop. (2) Session pooling:
 sign-on dominates every replay and the expiry path is already modelled. (3)
 Overlay generation: record on tenant A, dry-run its locators against tenant B,
 emit the diff for review — every input exists, and it is the highest-leverage

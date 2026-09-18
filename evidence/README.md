@@ -67,6 +67,30 @@ model loading, not thinking, which is why `OllamaClient.warm()` exists.
 
 ---
 
+## A discovery run that did not work
+
+`discover_e9ca225a/`
+
+Kept deliberately. This is the same loop attempting the eleven-step
+account-opening flow, and it shows where a 7B model on CPU runs out of
+road: 12 navigation decisions and 2 goal checks, 4468s of inference,
+ending **None** — None.
+
+The interesting part is the last few decisions. With the form completely
+filled and the submit button on screen, the model clicked the account-type
+dropdown, then re-selected it, then selected the other option — cycling
+between two states rather than pressing the button. That is what prompted
+the oscillation check in the stuck detector: flipping a dropdown changes
+the screen every time, so a naive "did anything change" test reads it as
+progress and the loop will happily spend its whole budget going nowhere.
+
+`member.subaccount.open` was therefore recorded deterministically instead
+(`scripts/record_reference_capability.py`), and its provenance says so.
+The capability exists to exercise the replay-side guardrails; the genuine
+LLM discovery run in this repo is the one above.
+
+---
+
 ## The replays
 
 Produced by `scripts/evidence.sh`, in order. Each is its own directory with
@@ -74,17 +98,22 @@ a structured `run.jsonl`, a `result.json` and screenshots.
 
 | # | scenario | result | run |
 |---|---|---|---|
-| 1 | happy path — the member it was recorded against | ✅ **SUCCESS** | `replay_323503c0` |
-| 2 | a **different** member — proves it is parameterised, not a macro | ✅ **SUCCESS** | `replay_cf7e2013` |
-| 3 | member that does not exist | 🟡 **BUSINESS OUTCOME** `MEMBER_NOT_FOUND` | `replay_609e4008` |
-| 4 | restricted record — permission denial | 🟡 **BUSINESS OUTCOME** `ACCESS_DENIED` | `replay_b6bc66ea` |
-| 5 | caller passed a non-numeric member id | 🔴 **FAILED** | `replay_8415386c` |
-| 6 | unexpected maintenance interstitial injected | ✅ **SUCCESS** _(recovered MAINTENANCE_INTERSTITIAL)_ | `replay_20d8b4e8` |
-| 7 | 1.2s of injected latency | ✅ **SUCCESS** | `replay_7c594495` |
-| 8 | HTTP 500 injected | 🔴 **FAILED** `APP_ERROR` | `replay_8fae1549` |
-| 9 | session expired mid-run | 🟣 **ESCALATED** `SESSION_EXPIRED` _(handed to an operator and returned)_ | `replay_b9bb31fd` |
-| 10 | **tenant B** — same capability, overlay applied | ✅ **SUCCESS** | `replay_42b95eec` |
-| 11 | invoked by name, as an AI agent would call it | ✅ **SUCCESS** | `invoke_f3f87ccd` |
+| 1 | happy path — the member it was recorded against | ✅ **SUCCESS** | `replay_06bc472d` |
+| 2 | a **different** member — proves it is parameterised, not a macro | ✅ **SUCCESS** | `replay_04310bc2` |
+| 3 | member that does not exist | 🟡 **BUSINESS OUTCOME** `MEMBER_NOT_FOUND` | `replay_eb946a78` |
+| 4 | restricted record — permission denial | 🟡 **BUSINESS OUTCOME** `ACCESS_DENIED` | `replay_d034d0bb` |
+| 5 | caller passed a non-numeric member id | 🔴 **FAILED** | `replay_ff11c751` |
+| 6 | unexpected maintenance interstitial injected | ✅ **SUCCESS** _(recovered MAINTENANCE_INTERSTITIAL)_ | `replay_f31a81c6` |
+| 7 | 1.2s of injected latency | ✅ **SUCCESS** | `replay_fb0a9a0f` |
+| 8 | HTTP 500 injected | 🔴 **FAILED** `APP_ERROR` | `replay_5bf459c6` |
+| 9 | session expired mid-run | 🟣 **ESCALATED** `SESSION_EXPIRED` _(handed to an operator and returned)_ | `replay_6932dc9f` |
+| 10 | **tenant B** — same capability, overlay applied | ✅ **SUCCESS** | `replay_0180e4e3` |
+| 11 | invoked by name, as an AI agent would call it | ✅ **SUCCESS** | `invoke_0a545dda` |
+| 12 | **draft** capability with an irreversible step, unattended — refused before touching the UI | 🔴 **FAILED** | `replay_98b0fd11` |
+| 13 | same capability **attended** — a human is watching, so it proceeds | ✅ **SUCCESS** | `replay_d03f096b` |
+| 14 | the **approved** capability, unattended — now permitted | ✅ **SUCCESS** | `replay_25418d1b` |
+| 15 | deposit below the capability's own minimum — rejected by the input contract | 🔴 **FAILED** | `replay_910e7b72` |
+| 16 | the host declines the posting — a business outcome on a committing capability | 🟡 **BUSINESS OUTCOME** `POSTING_UNAVAILABLE` | `replay_9d64e0d6` |
 
 The three rows that carry the argument of the whole design:
 

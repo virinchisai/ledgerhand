@@ -245,6 +245,15 @@ def render_readable(obs: Observation, limit: int = 18) -> str:
             if row:
                 line += f", row: {row[:44]}"
             line += ")"
+        elif row:
+            # A two-column layout table names its value in the row's first
+            # cell. Without it the model sees `cell "0003-4411"` -- a bare
+            # number it cannot tell from any other number on the screen, which
+            # is exactly how a confirmation number got bound and an account
+            # number did not.
+            label = row.split("|")[0].strip()
+            if label and normalize(label) != normalize(n.text):
+                line += f" (label: {label[:36]})"
         out.append(line)
     return "\n".join(out) or "  (none)"
 

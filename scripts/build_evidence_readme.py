@@ -26,6 +26,11 @@ SCENARIOS = [
     "session expired mid-run",
     "**tenant B** — same capability, overlay applied",
     "invoked by name, as an AI agent would call it",
+    "**draft** capability with an irreversible step, unattended — refused before touching the UI",
+    "same capability **attended** — a human is watching, so it proceeds",
+    "the **approved** capability, unattended — now permitted",
+    "deposit below the capability's own minimum — rejected by the input contract",
+    "the host declines the posting — a business outcome on a committing capability",
 ]
 
 STATUS = {
@@ -137,6 +142,32 @@ def discovery_section(run: dict) -> str:
     return "\n".join(out)
 
 
+def failed_section(run: dict) -> str:
+    """The run that did not work, kept on purpose."""
+    navs = [e for e in run["events"] if e["kind"] == "model_call"]
+    checks = [e for e in run["events"] if e["kind"] == "goal_check"]
+    inference = int(sum(e.get("latency_ms", 0) for e in navs + checks) / 1000)
+    return "\n".join([
+        "## A discovery run that did not work", "", f"`{run['dir']}/`", "",
+        "Kept deliberately. This is the same loop attempting the eleven-step",
+        "account-opening flow, and it shows where a 7B model on CPU runs out of",
+        f"road: {len(navs)} navigation decisions and {len(checks)} goal checks, "
+        f"{inference}s of inference,",
+        f"ending **{run['end'].get('status')}** — {run['end'].get('reason')}.", "",
+        "The interesting part is the last few decisions. With the form completely",
+        "filled and the submit button on screen, the model clicked the account-type",
+        "dropdown, then re-selected it, then selected the other option — cycling",
+        "between two states rather than pressing the button. That is what prompted",
+        "the oscillation check in the stuck detector: flipping a dropdown changes",
+        "the screen every time, so a naive \"did anything change\" test reads it as",
+        "progress and the loop will happily spend its whole budget going nowhere.", "",
+        "`member.subaccount.open` was therefore recorded deterministically instead",
+        "(`scripts/record_reference_capability.py`), and its provenance says so.",
+        "The capability exists to exercise the replay-side guardrails; the genuine",
+        "LLM discovery run in this repo is the one above.",
+    ])
+
+
 def replay_section(runs: list[dict]) -> str:
     rows = ["## The replays", "",
             "Produced by `scripts/evidence.sh`, in order. Each is its own directory with",
@@ -168,13 +199,21 @@ def replay_section(runs: list[dict]) -> str:
 def main() -> int:
     runs = [r for r in (load(d) for d in EVIDENCE.iterdir()) if r]
     discovery = [r for r in runs if r["dir"].startswith("discover")]
-    replays = sorted((r for r in runs if not r["dir"].startswith("discover")),
+    succeeded = [r for r in discovery if r["end"].get("status") == "succeeded"]
+    failed = [r for r in discovery if r["end"].get("status") != "succeeded"]
+    # record_* is the deterministic walk that produced the reference
+    # capability, not a replay of one.
+    replays = sorted((r for r in runs
+                      if not r["dir"].startswith(("discover", "record"))),
                      key=lambda r: r["mtime"])
-    if not discovery:
-        print("no discovery run found under evidence/", file=sys.stderr)
+    if not succeeded:
+        print("no successful discovery run found under evidence/", file=sys.stderr)
         return 1
-    body = "\n".join([HEADER, discovery_section(discovery[0]), "\n---\n",
-                      replay_section(replays), FOOTER])
+    parts = [HEADER, discovery_section(succeeded[0])]
+    if failed:
+        parts += ["\n---\n", failed_section(failed[0])]
+    parts += ["\n---\n", replay_section(replays), FOOTER]
+    body = "\n".join(parts)
     (EVIDENCE / "README.md").write_text(body)
     print(f"evidence/README.md: 1 discovery run, {len(replays)} replays")
     return 0

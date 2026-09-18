@@ -1180,11 +1180,11 @@
     "notes": "recorded from goal 'Sign on to the console, search for the member, and reach the member detail screen showing their account balances.'; 6 model steps pruned to 5"
   },
   "stability": {
-    "replays": 22,
-    "successes": 11,
-    "business_outcomes": 4,
-    "failures": 7,
-    "last_replay_at": "2026-09-18T03:06:02.636292Z",
+    "replays": 52,
+    "successes": 26,
+    "business_outcomes": 10,
+    "failures": 16,
+    "last_replay_at": "2026-09-18T14:15:11.983485Z",
     "fallback_counts": {}
   },
   "overlays": [

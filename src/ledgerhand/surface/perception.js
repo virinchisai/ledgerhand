@@ -185,7 +185,15 @@
       role: roleOf(el),
       name: name,
       inferred_label: name ? "" : inferLabel(el),
-      value: (el.value !== undefined && el.type !== "password") ? norm(String(el.value)) : "",
+      // A <select> reports its option's *value* attribute ("SAV"), not the text
+      // a person reads ("SAVINGS"). Surfacing the attribute makes a correctly
+      // selected control look wrong to anyone reasoning about the screen -- the
+      // model re-selected it in a loop rather than moving on. Report what is
+      // displayed; the value attribute is an implementation detail.
+      value: el.tagName === "SELECT"
+        ? norm((el.selectedOptions && el.selectedOptions[0]
+                ? el.selectedOptions[0].text : el.value) || "")
+        : ((el.value !== undefined && el.type !== "password") ? norm(String(el.value)) : ""),
       text: norm((el.innerText || "").slice(0, MAX_TEXT)),
       enabled: !el.disabled,
       editable: /^(INPUT|TEXTAREA)$/.test(el.tagName) && !el.readOnly && !el.disabled,

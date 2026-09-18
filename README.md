@@ -80,6 +80,24 @@ ledgerhand replay member.savings_balance.lookup --arg member_id=23456
 ledgerhand replay member.savings_balance.lookup --arg member_id=99999
 ```
 
+**5 — Watch the guardrail refuse.** A second capability, `member.subaccount.open`,
+ends by clicking "Open Account" — policy classifies that as irreversible, so it
+will not replay unattended until a human approves it:
+
+```bash
+# refused before touching the UI: irreversible step, capability is draft
+ledgerhand replay member.subaccount.open --arg member_id=23456 \
+    --arg account_type=SAVINGS --arg initial_deposit=150.00
+
+ledgerhand approve member.subaccount.open --state approved
+
+# now permitted, because approval is the recorded human decision
+ledgerhand replay member.subaccount.open --arg member_id=23456 \
+    --arg account_type=SAVINGS --arg initial_deposit=150.00
+```
+
+Run the whole evidence pack — twenty scenarios — with `./scripts/evidence.sh`.
+
 ### Running without Ollama
 
 Everything except step 1 is model-free, so the whole system can be exercised
@@ -91,8 +109,15 @@ ledgerhand replay member.savings_balance.lookup --arg member_id=12345
 ```
 
 The test suite substitutes a deterministic oracle for the model (`tests/oracle.py`).
-The run under [`evidence/`](evidence/) was produced by a real LLM — see
-[Evidence](#evidence).
+
+**Which runs used a model.** `member.savings_balance.lookup` was discovered by a
+real LLM driving the live UI — six decisions, logged under `evidence/discover_*`.
+`member.subaccount.open` was **not**: a local 7B could not complete that
+eleven-step flow (four attempts; the failed run is kept in `/evidence` and the
+reasons are in REPORT.md §7), so it was recorded by walking the flow
+deterministically via `scripts/record_reference_capability.py`. Its
+`provenance.model` says `oracle`. It exists to exercise the replay-side
+guardrails, and nothing claims a model found that route.
 
 ---
 
