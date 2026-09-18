@@ -1,0 +1,61 @@
+# A discovery request. This file IS the capability's contract-in-waiting: the
+# typed inputs and outputs are declared here, by a person, before the model runs.
+#
+# The model's job is only to work out the *route* through the UI. It is never
+# shown a parameter value -- it emits "@param:member_id" and the executor
+# substitutes. That is why parameterisation in the resulting artifact is exact
+# rather than inferred by matching recorded strings back out of the trace.
+
+capability_id: member.savings_balance.lookup
+name: Look up a member's savings balance
+description: >-
+  Sign on to the servicing console, look up a member by member id, and return
+  the current balance of their SAVINGS account together with the member name.
+
+goal: >-
+  Sign on to the console, search for the member, and reach the member detail
+  screen showing their account balances.
+
+tenant: firstvalley
+product_version: "7.2.14"
+entry_url: "http://127.0.0.1:8848/t/firstvalley/"
+
+inputs:
+  - name: member_id
+    type: string
+    description: the member number to look up
+    sensitivity: pii
+    pattern: "[0-9]{4,12}"
+    example: "<member id>"
+
+# Logical secret name -> environment variable holding the value.
+# Neither the name nor the value is ever written into an artifact.
+secrets:
+  MCB_OPERATOR:
+    env: LEDGERHAND_MCB_OPERATOR
+    description: the operator id to sign on with
+  MCB_PASSWORD:
+    env: LEDGERHAND_MCB_PASSWORD
+    description: the password for that operator
+
+outputs:
+  - name: savings_balance
+    type: money
+    description: current balance of the account whose type is SAVINGS
+  - name: member_name
+    type: string
+    sensitivity: pii
+    description: the member's full name as shown on the detail screen
+
+# Outcomes from the product profile this capability can actually produce.
+# A read-only lookup cannot return a posting rejection, so it does not claim to.
+outcomes:
+  - MEMBER_NOT_FOUND
+  - ACCESS_DENIED
+  - MAINTENANCE_INTERSTITIAL
+  - SESSION_EXPIRED
+  - APP_ERROR
+
+# Values used for THIS discovery run only. Never recorded into the artifact.
+values:
+  member_id: "12345"

@@ -1,0 +1,100 @@
+# Product profile for the "Meridian Core" servicing console.
+#
+# The key idea: an error taxonomy is a property of the VENDOR PRODUCT, not of
+# any one capability or tenant. "MCB-0042 means no such member" is true on every
+# screen, in every institution running Meridian Core 7.x, for every capability
+# anyone records against it. Declaring it once here means:
+#
+#   * a newly recorded capability inherits correct outcome handling for free,
+#     including paths the happy-path discovery run never visited;
+#   * fixing a detector fixes it everywhere;
+#   * a tenant whose wording differs overrides one detector, not a whole flow.
+#
+# This is also the honest answer to "how did you discover the error paths?" --
+# you cannot discover them from a successful run. They are product knowledge,
+# written down once by whoever onboards the product.
+
+product: meridian-core
+version_range: ">=7.0,<8.0"
+
+# Reusable multi-step fixes an outcome can invoke by name.
+recovery_flows:
+  acknowledge_notice:
+    description: Dismiss the maintenance interstitial that can appear on any screen.
+    steps:
+      - action: click
+        intent: Acknowledge the maintenance notice
+        control: {role: button, label: "Acknowledge"}
+        risk: safe
+
+outcomes:
+  # ---- legitimate answers the caller asked for --------------------------
+  - code: MEMBER_NOT_FOUND
+    classification: business_outcome
+    message: "No member exists for the supplied member id."
+    detect:
+      any:
+        - {text: "No member found"}
+        - {text: "MCB-0042"}
+
+  - code: ACCESS_DENIED
+    classification: business_outcome
+    message: "The operator role is not permitted to view this member record."
+    detect:
+      any:
+        - {text: "MCB-0310"}
+        - {all: [{text: "Access denied"}, {text: "restricted"}]}
+
+  - code: VALIDATION_REJECTED
+    classification: business_outcome
+    message: "The application rejected the submitted values."
+    detect:
+      any:
+        - {text: "MCB-0101"}
+        - {text: "MCB-0102"}
+        - {text: "MCB-0103"}
+        - {text: "is required."}
+        - {text: "must be at least"}
+
+  - code: POSTING_UNAVAILABLE
+    classification: business_outcome
+    message: "The host declined the posting; it is temporarily unavailable."
+    detect: {text: "MCB-0199"}
+
+  # ---- conditions we can clear and carry on from ------------------------
+  - code: MAINTENANCE_INTERSTITIAL
+    classification: recoverable
+    message: "A maintenance notice interrupted the flow."
+    detect: {text: "System Maintenance Notice"}
+    recovery:
+      flow: acknowledge_notice
+      retry_step: true
+      max_attempts: 2
+
+  # ---- stop, and say so clearly ----------------------------------------
+  # Session expiry is deliberately NOT recoverable here. Re-authenticating
+  # mid-flow would silently resume a run whose earlier steps may have already
+  # half-committed, and it needs credentials the replay path is not given.
+  # Surfacing it is correct; a caller re-invokes with a fresh session.
+  - code: SESSION_EXPIRED
+    classification: hard_failure
+    message: "The application session expired; re-authentication is required."
+    detect:
+      any:
+        - {text: "Your session has expired"}
+        - {text: "session has expired"}
+
+  - code: APP_ERROR
+    classification: hard_failure
+    message: "The application returned an unexpected system error."
+    detect:
+      any:
+        - {text: "Unexpected system error"}
+        - {text: "MCB-500"}
+
+# Control labels that mark a commit point in THIS product, used to classify
+# step risk at record time. Product-specific because "Post" means something
+# different in a GL system than in a CRM.
+risk_labels:
+  irreversible: ["Open Account", "Post", "Transfer", "Approve", "Disburse", "Wire"]
+  elevated: ["Search", "Find", "Sign On", "Acknowledge", "Continue"]

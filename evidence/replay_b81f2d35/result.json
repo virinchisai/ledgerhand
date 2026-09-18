@@ -1,0 +1,112 @@
+{
+  "capability": "member.savings_balance.lookup@v1",
+  "tenant": "firstvalley",
+  "run_id": "replay_b81f2d35",
+  "status": "escalated",
+  "outputs": {},
+  "outcome_code": "SESSION_EXPIRED",
+  "outcome_class": "hard_failure",
+  "message": "The application session expired; re-authentication is required.",
+  "failure": {
+    "step_index": 2,
+    "step_intent": "submit sign-on",
+    "expected": "the recorded state",
+    "observed": "SESSION_EXPIRED: The application session expired; re-authentication is required.",
+    "locator_attempts": [],
+    "screenshot": "/Users/virinchisai/ledgerhand/evidence/replay_b81f2d35/screens/step_02_failure.png",
+    "dom_snapshot": "/Users/virinchisai/ledgerhand/evidence/replay_b81f2d35/screens/step_02_failure.html",
+    "url": "http://127.0.0.1:8848/t/firstvalley/console"
+  },
+  "intervention_id": "iv_680eebe931",
+  "steps": [
+    {
+      "index": 0,
+      "intent": "Enter operator ID",
+      "action": "type",
+      "status": "ok",
+      "started_at": "2026-09-18T02:52:20.396650Z",
+      "duration_ms": 2502,
+      "locator": {
+        "control": "textbox 'Operator ID'",
+        "resolved_by": "label_text",
+        "rank": 0,
+        "candidates_seen": 1,
+        "used_fallback": false,
+        "note": "rank 0 textbox labelled 'Operator ID': matched"
+      },
+      "checkpoint": null,
+      "checkpoint_passed": null,
+      "recoveries": [],
+      "detail": null,
+      "screenshot": null
+    },
+    {
+      "index": 1,
+      "intent": "enter password",
+      "action": "type",
+      "status": "ok",
+      "started_at": "2026-09-18T02:52:22.899363Z",
+      "duration_ms": 2275,
+      "locator": {
+        "control": "textbox 'Password'",
+        "resolved_by": "label_text",
+        "rank": 0,
+        "candidates_seen": 1,
+        "used_fallback": false,
+        "note": "rank 0 textbox labelled 'Password': matched"
+      },
+      "checkpoint": null,
+      "checkpoint_passed": null,
+      "recoveries": [],
+      "detail": null,
+      "screenshot": null
+    },
+    {
+      "index": 2,
+      "intent": "submit sign-on",
+      "action": "press",
+      "status": "ok",
+      "started_at": "2026-09-18T02:52:25.174798Z",
+      "duration_ms": 0,
+      "locator": null,
+      "checkpoint": null,
+      "checkpoint_passed": null,
+      "recoveries": [],
+      "detail": null,
+      "screenshot": null
+    },
+    {
+      "index": -1,
+      "intent": "human intervention",
+      "action": "handoff",
+      "status": "recovered",
+      "started_at": "2026-09-18T02:52:38.007795Z",
+      "duration_ms": 0,
+      "locator": null,
+      "checkpoint": null,
+      "checkpoint_passed": null,
+      "recoveries": [],
+      "detail": "operator auto.operator performed 2 action(s); resume requested",
+      "screenshot": null
+    },
+    {
+      "index": 2,
+      "intent": "submit sign-on",
+      "action": "press",
+      "status": "ok",
+      "started_at": "2026-09-18T02:52:38.008638Z",
+      "duration_ms": 0,
+      "locator": null,
+      "checkpoint": null,
+      "checkpoint_passed": null,
+      "recoveries": [],
+      "detail": null,
+      "screenshot": null
+    }
+  ],
+  "started_at": "2026-09-18T02:52:19.860838Z",
+  "duration_ms": 18193,
+  "evidence_dir": "/Users/virinchisai/ledgerhand/evidence/replay_b81f2d35",
+  "drift_detected": false,
+  "drift_notes": []
+}

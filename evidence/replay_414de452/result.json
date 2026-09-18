@@ -1,0 +1,122 @@
+{
+  "capability": "member.savings_balance.lookup@v1",
+  "tenant": "firstvalley",
+  "run_id": "replay_414de452",
+  "status": "success",
+  "outputs": {
+    "savings_balance": 4182.55,
+    "member_name": "DANA WHITFIELD"
+  },
+  "outcome_code": null,
+  "outcome_class": null,
+  "message": null,
+  "failure": null,
+  "intervention_id": null,
+  "steps": [
+    {
+      "index": 0,
+      "intent": "Enter operator ID",
+      "action": "type",
+      "status": "ok",
+      "started_at": "2026-09-18T02:51:33.544871Z",
+      "duration_ms": 2463,
+      "locator": {
+        "control": "textbox 'Operator ID'",
+        "resolved_by": "label_text",
+        "rank": 0,
+        "candidates_seen": 1,
+        "used_fallback": false,
+        "note": "rank 0 textbox labelled 'Operator ID': matched"
+      },
+      "checkpoint": null,
+      "checkpoint_passed": null,
+      "recoveries": [],
+      "detail": null,
+      "screenshot": null
+    },
+    {
+      "index": 1,
+      "intent": "enter password",
+      "action": "type",
+      "status": "ok",
+      "started_at": "2026-09-18T02:51:36.007968Z",
+      "duration_ms": 2333,
+      "locator": {
+        "control": "textbox 'Password'",
+        "resolved_by": "label_text",
+        "rank": 0,
+        "candidates_seen": 1,
+        "used_fallback": false,
+        "note": "rank 0 textbox labelled 'Password': matched"
+      },
+      "checkpoint": null,
+      "checkpoint_passed": null,
+      "recoveries": [],
+      "detail": null,
+      "screenshot": null
+    },
+    {
+      "index": 2,
+      "intent": "submit sign-on",
+      "action": "press",
+      "status": "ok",
+      "started_at": "2026-09-18T02:51:38.341926Z",
+      "duration_ms": 2244,
+      "locator": null,
+      "checkpoint": "text_present('Home > Member Inquiry')",
+      "checkpoint_passed": true,
+      "recoveries": [
+        "MAINTENANCE_INTERSTITIAL"
+      ],
+      "detail": null,
+      "screenshot": null
+    },
+    {
+      "index": 3,
+      "intent": "enter member ID for search",
+      "action": "type",
+      "status": "ok",
+      "started_at": "2026-09-18T02:51:40.586856Z",
+      "duration_ms": 2234,
+      "locator": {
+        "control": "textbox 'Member ID'",
+        "resolved_by": "label_text",
+        "rank": 0,
+        "candidates_seen": 1,
+        "used_fallback": false,
+        "note": "rank 0 textbox labelled 'Member ID': matched"
+      },
+      "checkpoint": null,
+      "checkpoint_passed": null,
+      "recoveries": [],
+      "detail": null,
+      "screenshot": null
+    },
+    {
+      "index": 4,
+      "intent": "search for member",
+      "action": "click",
+      "status": "ok",
+      "started_at": "2026-09-18T02:51:42.821660Z",
+      "duration_ms": 2186,
+      "locator": {
+        "control": "button 'Search'",
+        "resolved_by": "ax_role_name",
+        "rank": 0,
+        "candidates_seen": 1,
+        "used_fallback": false,
+        "note": "rank 0 button[name~='Search']: matched"
+      },
+      "checkpoint": "all_of(text_present('Home > Member Inquiry > Detail'), control_present(source of output 'savings_balance'), control_present(source of output 'member_name'))",
+      "checkpoint_passed": true,
+      "recoveries": [],
+      "detail": null,
+      "screenshot": null
+    }
+  ],
+  "started_at": "2026-09-18T02:51:33.017539Z",
+  "duration_ms": 12039,
+  "evidence_dir": "/Users/virinchisai/ledgerhand/evidence/replay_414de452",
+  "drift_detected": false,
+  "drift_notes": []
+}

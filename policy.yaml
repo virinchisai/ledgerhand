@@ -1,0 +1,92 @@
+# Guardrail profiles. Loaded by both the discovery loop and the replay engine --
+# there is exactly one enforcement path, so what is reviewed here is what runs.
+#
+# Default-deny on reach: an origin not listed cannot be navigated to, by the
+# model or by a recorded artifact.
+
+profiles:
+  default:
+    max_steps: 24
+    # Wall-clock ceiling for one run. Sized for CPU-local inference, where a
+    # single decision costs ~2 minutes; a hosted model would want a tenth of
+    # this. It is a policy value precisely because it depends on the deployment
+    # rather than on the flow.
+    max_run_seconds: 3600
+
+    network:
+      allowed_origins:
+        - "http://127.0.0.1:8848"
+      allowed_path_prefixes:
+        - "/t/"
+      denied_path_patterns:
+        # The target app's own control plane is off-limits to automation:
+        # an agent that can inject faults into the system it is driving can
+        # manufacture the evidence that it succeeded.
+        - "^/admin"
+
+    actions:
+      allowed_actions: [navigate, click, type, select, press, extract, wait, assert, finish]
+
+    risk:
+      # Irreversible acts are permitted but never unattended: a person decides,
+      # and the decision is recorded. Blocking outright would rule out the
+      # flows institutions most want automated.
+      irreversible_mode: confirm
+      irreversible_labels:
+        - "open account"
+        - "post"
+        - "transfer"
+        - "submit"
+        - "approve"
+        - "delete"
+        - "close account"
+        - "disburse"
+        - "wire"
+      elevated_labels:
+        - "search"
+        - "find"
+        - "sign on"
+        - "continue"
+        - "acknowledge"
+
+    redaction:
+      # The discovery model runs locally, so screen contents never leave the
+      # host. Set true when pointing at a hosted provider.
+      redact_before_model: false
+      extra_patterns:
+        - name: member_id
+          regex: "\\bMBR-\\d{6,}\\b"
+
+  # Read-only profile: for capabilities that must never be able to write,
+  # regardless of what the artifact says.
+  readonly:
+    max_steps: 16
+    network:
+      allowed_origins: ["http://127.0.0.1:8848"]
+      allowed_path_prefixes: ["/t/"]
+      denied_path_patterns: ["^/admin"]
+    actions:
+      allowed_actions: [navigate, click, type, press, extract, wait, assert, finish]
+    risk:
+      irreversible_mode: block
+      irreversible_labels: ["open account", "post", "transfer", "submit", "approve", "delete"]
+
+  # For a model that is NOT local. Identical guardrails, but screen content is
+  # redacted before it is put in a prompt -- with a hosted provider the contents
+  # of a member detail screen leave the host, and that is a different risk from
+  # the same bytes sitting in a browser on an operator's desk.
+  hosted:
+    max_steps: 24
+    max_run_seconds: 900
+    network:
+      allowed_origins: ["http://127.0.0.1:8848"]
+      allowed_path_prefixes: ["/t/"]
+      denied_path_patterns: ["^/admin"]
+    actions:
+      allowed_actions: [navigate, click, type, select, press, extract, wait, assert, finish]
+    risk:
+      irreversible_mode: confirm
+      irreversible_labels: ["open account", "post", "transfer", "submit", "approve", "delete"]
+      elevated_labels: ["search", "find", "sign on", "continue", "acknowledge"]
+    redaction:
+      redact_before_model: true

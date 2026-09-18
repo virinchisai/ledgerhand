@@ -1,0 +1,1191 @@
+{
+  "schema_version": "1.1",
+  "id": "member.savings_balance.lookup",
+  "version": 1,
+  "name": "Look up a member's savings balance",
+  "description": "Sign on to the servicing console, look up a member by member id, and return the current balance of their SAVINGS account together with the member name.",
+  "target": {
+    "product": "meridian-core",
+    "product_version": "7.2.14",
+    "tenant": "firstvalley",
+    "surface": "web",
+    "entry_url": "http://127.0.0.1:8848/t/firstvalley/",
+    "policy_profile": "default"
+  },
+  "inputs": [
+    {
+      "name": "member_id",
+      "type": "string",
+      "required": true,
+      "description": "the member number to look up",
+      "sensitivity": "pii",
+      "default": null,
+      "pattern": "[0-9]{4,12}",
+      "enum": null,
+      "minimum": null,
+      "maximum": null,
+      "example": "<member id>"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "savings_balance",
+      "type": "money",
+      "description": "current balance of the account whose type is SAVINGS",
+      "sensitivity": "internal",
+      "required": true,
+      "extract": {
+        "control": {
+          "description": "source of output 'savings_balance'",
+          "strategies": [
+            {
+              "kind": "anchor_relative",
+              "rank": 0,
+              "confidence": 0.8,
+              "role": "cell",
+              "name": null,
+              "label": null,
+              "anchor": {
+                "anchor_text": "SAVINGS",
+                "anchor_match": "normalized",
+                "container_role": "row",
+                "column_header": "Current Balance",
+                "cell_index": null
+              },
+              "attr": null,
+              "attr_value": null,
+              "css": null,
+              "ordinal": null,
+              "within_text": null
+            },
+            {
+              "kind": "dom_css",
+              "rank": 1,
+              "confidence": 0.35,
+              "role": null,
+              "name": null,
+              "label": null,
+              "anchor": null,
+              "attr": null,
+              "attr_value": null,
+              "css": "table:nth-of-type(2) > tbody > tr:nth-of-type(2) > td:nth-of-type(4)",
+              "ordinal": null,
+              "within_text": null
+            }
+          ],
+          "frame_path": [
+            "mcbmain"
+          ],
+          "allow_fallback": true
+        },
+        "attribute": "text",
+        "attr_name": null,
+        "transform": "money",
+        "regex": null,
+        "group": 1
+      }
+    },
+    {
+      "name": "member_name",
+      "type": "string",
+      "description": "the member's full name as shown on the detail screen",
+      "sensitivity": "pii",
+      "required": true,
+      "extract": {
+        "control": {
+          "description": "source of output 'member_name'",
+          "strategies": [
+            {
+              "kind": "anchor_relative",
+              "rank": 0,
+              "confidence": 0.7,
+              "role": "text",
+              "name": null,
+              "label": null,
+              "anchor": {
+                "anchor_text": "Member",
+                "anchor_match": "normalized",
+                "container_role": "row",
+                "column_header": null,
+                "cell_index": 1
+              },
+              "attr": null,
+              "attr_value": null,
+              "css": null,
+              "ordinal": null,
+              "within_text": null
+            },
+            {
+              "kind": "dom_css",
+              "rank": 1,
+              "confidence": 0.35,
+              "role": null,
+              "name": null,
+              "label": null,
+              "anchor": null,
+              "attr": null,
+              "attr_value": null,
+              "css": "tr:nth-of-type(2) > td:nth-of-type(2) > font > b",
+              "ordinal": null,
+              "within_text": null
+            }
+          ],
+          "frame_path": [
+            "mcbmain"
+          ],
+          "allow_fallback": true
+        },
+        "attribute": "text",
+        "attr_name": null,
+        "transform": "trim",
+        "regex": null,
+        "group": 1
+      }
+    }
+  ],
+  "outcomes": [
+    {
+      "code": "MEMBER_NOT_FOUND",
+      "classification": "business_outcome",
+      "detect": {
+        "kind": "any_of",
+        "text": null,
+        "match": "normalized",
+        "control": null,
+        "pattern": null,
+        "operands": [
+          {
+            "kind": "text_present",
+            "text": "No member found",
+            "match": "contains",
+            "control": null,
+            "pattern": null,
+            "operands": [],
+            "note": null
+          },
+          {
+            "kind": "text_present",
+            "text": "MCB-0042",
+            "match": "contains",
+            "control": null,
+            "pattern": null,
+            "operands": [],
+            "note": null
+          }
+        ],
+        "note": null
+      },
+      "message": "No member exists for the supplied member id.",
+      "recovery": null,
+      "applies_to_steps": null
+    },
+    {
+      "code": "ACCESS_DENIED",
+      "classification": "business_outcome",
+      "detect": {
+        "kind": "any_of",
+        "text": null,
+        "match": "normalized",
+        "control": null,
+        "pattern": null,
+        "operands": [
+          {
+            "kind": "text_present",
+            "text": "MCB-0310",
+            "match": "contains",
+            "control": null,
+            "pattern": null,
+            "operands": [],
+            "note": null
+          },
+          {
+            "kind": "all_of",
+            "text": null,
+            "match": "normalized",
+            "control": null,
+            "pattern": null,
+            "operands": [
+              {
+                "kind": "text_present",
+                "text": "Access denied",
+                "match": "contains",
+                "control": null,
+                "pattern": null,
+                "operands": [],
+                "note": null
+              },
+              {
+                "kind": "text_present",
+                "text": "restricted",
+                "match": "contains",
+                "control": null,
+                "pattern": null,
+                "operands": [],
+                "note": null
+              }
+            ],
+            "note": null
+          }
+        ],
+        "note": null
+      },
+      "message": "The operator role is not permitted to view this member record.",
+      "recovery": null,
+      "applies_to_steps": null
+    },
+    {
+      "code": "MAINTENANCE_INTERSTITIAL",
+      "classification": "recoverable",
+      "detect": {
+        "kind": "text_present",
+        "text": "System Maintenance Notice",
+        "match": "contains",
+        "control": null,
+        "pattern": null,
+        "operands": [],
+        "note": null
+      },
+      "message": "A maintenance notice interrupted the flow.",
+      "recovery": {
+        "steps": [
+          {
+            "index": 0,
+            "intent": "Acknowledge the maintenance notice",
+            "action": "click",
+            "target": {
+              "description": "button 'Acknowledge'",
+              "strategies": [
+                {
+                  "kind": "label_text",
+                  "rank": 0,
+                  "confidence": 0.9,
+                  "role": "button",
+                  "name": null,
+                  "label": {
+                    "mode": "normalized",
+                    "value": "Acknowledge"
+                  },
+                  "anchor": null,
+                  "attr": null,
+                  "attr_value": null,
+                  "css": null,
+                  "ordinal": null,
+                  "within_text": null
+                },
+                {
+                  "kind": "ax_role_name",
+                  "rank": 1,
+                  "confidence": 0.8,
+                  "role": "button",
+                  "name": {
+                    "mode": "normalized",
+                    "value": "Acknowledge"
+                  },
+                  "label": null,
+                  "anchor": null,
+                  "attr": null,
+                  "attr_value": null,
+                  "css": null,
+                  "ordinal": null,
+                  "within_text": null
+                }
+              ],
+              "frame_path": [],
+              "allow_fallback": true
+            },
+            "value": null,
+            "url": null,
+            "key": null,
+            "output": null,
+            "wait": {
+              "before_ms": 0,
+              "settle": true,
+              "timeout_ms": 12000,
+              "until": null
+            },
+            "checkpoint": null,
+            "risk": "safe",
+            "optional": false
+          }
+        ],
+        "retry_step": true,
+        "max_attempts": 2
+      },
+      "applies_to_steps": null
+    },
+    {
+      "code": "SESSION_EXPIRED",
+      "classification": "hard_failure",
+      "detect": {
+        "kind": "any_of",
+        "text": null,
+        "match": "normalized",
+        "control": null,
+        "pattern": null,
+        "operands": [
+          {
+            "kind": "text_present",
+            "text": "Your session has expired",
+            "match": "contains",
+            "control": null,
+            "pattern": null,
+            "operands": [],
+            "note": null
+          },
+          {
+            "kind": "text_present",
+            "text": "session has expired",
+            "match": "contains",
+            "control": null,
+            "pattern": null,
+            "operands": [],
+            "note": null
+          }
+        ],
+        "note": null
+      },
+      "message": "The application session expired; re-authentication is required.",
+      "recovery": null,
+      "applies_to_steps": null
+    },
+    {
+      "code": "APP_ERROR",
+      "classification": "hard_failure",
+      "detect": {
+        "kind": "any_of",
+        "text": null,
+        "match": "normalized",
+        "control": null,
+        "pattern": null,
+        "operands": [
+          {
+            "kind": "text_present",
+            "text": "Unexpected system error",
+            "match": "contains",
+            "control": null,
+            "pattern": null,
+            "operands": [],
+            "note": null
+          },
+          {
+            "kind": "text_present",
+            "text": "MCB-500",
+            "match": "contains",
+            "control": null,
+            "pattern": null,
+            "operands": [],
+            "note": null
+          }
+        ],
+        "note": null
+      },
+      "message": "The application returned an unexpected system error.",
+      "recovery": null,
+      "applies_to_steps": null
+    }
+  ],
+  "steps": [
+    {
+      "index": 0,
+      "intent": "Enter operator ID",
+      "action": "type",
+      "target": {
+        "description": "textbox 'Operator ID'",
+        "strategies": [
+          {
+            "kind": "label_text",
+            "rank": 0,
+            "confidence": 0.85,
+            "role": "textbox",
+            "name": null,
+            "label": {
+              "mode": "normalized",
+              "value": "Operator ID"
+            },
+            "anchor": null,
+            "attr": null,
+            "attr_value": null,
+            "css": null,
+            "ordinal": null,
+            "within_text": null
+          },
+          {
+            "kind": "anchor_relative",
+            "rank": 1,
+            "confidence": 0.7,
+            "role": "textbox",
+            "name": null,
+            "label": null,
+            "anchor": {
+              "anchor_text": "Operator ID",
+              "anchor_match": "normalized",
+              "container_role": "row",
+              "column_header": null,
+              "cell_index": 1
+            },
+            "attr": null,
+            "attr_value": null,
+            "css": null,
+            "ordinal": null,
+            "within_text": null
+          },
+          {
+            "kind": "dom_attr",
+            "rank": 2,
+            "confidence": 0.6,
+            "role": null,
+            "name": null,
+            "label": null,
+            "anchor": null,
+            "attr": "name",
+            "attr_value": "ctl00$Logon$txtOperator",
+            "css": null,
+            "ordinal": null,
+            "within_text": null
+          },
+          {
+            "kind": "dom_css",
+            "rank": 3,
+            "confidence": 0.35,
+            "role": null,
+            "name": null,
+            "label": null,
+            "anchor": null,
+            "attr": null,
+            "attr_value": null,
+            "css": "tbody > tr:nth-of-type(2) > td:nth-of-type(2) > input",
+            "ordinal": null,
+            "within_text": null
+          }
+        ],
+        "frame_path": [],
+        "allow_fallback": true
+      },
+      "value": {
+        "source": "secret",
+        "literal": null,
+        "ref": "MCB_OPERATOR"
+      },
+      "url": null,
+      "key": null,
+      "output": null,
+      "wait": {
+        "before_ms": 0,
+        "settle": true,
+        "timeout_ms": 12000,
+        "until": null
+      },
+      "checkpoint": null,
+      "risk": "elevated",
+      "optional": false
+    },
+    {
+      "index": 1,
+      "intent": "enter password",
+      "action": "type",
+      "target": {
+        "description": "textbox 'Password'",
+        "strategies": [
+          {
+            "kind": "label_text",
+            "rank": 0,
+            "confidence": 0.85,
+            "role": "textbox",
+            "name": null,
+            "label": {
+              "mode": "normalized",
+              "value": "Password"
+            },
+            "anchor": null,
+            "attr": null,
+            "attr_value": null,
+            "css": null,
+            "ordinal": null,
+            "within_text": null
+          },
+          {
+            "kind": "anchor_relative",
+            "rank": 1,
+            "confidence": 0.7,
+            "role": "textbox",
+            "name": null,
+            "label": null,
+            "anchor": {
+              "anchor_text": "Password",
+              "anchor_match": "normalized",
+              "container_role": "row",
+              "column_header": null,
+              "cell_index": 1
+            },
+            "attr": null,
+            "attr_value": null,
+            "css": null,
+            "ordinal": null,
+            "within_text": null
+          },
+          {
+            "kind": "dom_attr",
+            "rank": 2,
+            "confidence": 0.6,
+            "role": null,
+            "name": null,
+            "label": null,
+            "anchor": null,
+            "attr": "name",
+            "attr_value": "ctl00$Logon$txtPassword",
+            "css": null,
+            "ordinal": null,
+            "within_text": null
+          },
+          {
+            "kind": "dom_css",
+            "rank": 3,
+            "confidence": 0.35,
+            "role": null,
+            "name": null,
+            "label": null,
+            "anchor": null,
+            "attr": null,
+            "attr_value": null,
+            "css": "tbody > tr:nth-of-type(3) > td:nth-of-type(2) > input",
+            "ordinal": null,
+            "within_text": null
+          }
+        ],
+        "frame_path": [],
+        "allow_fallback": true
+      },
+      "value": {
+        "source": "secret",
+        "literal": null,
+        "ref": "MCB_PASSWORD"
+      },
+      "url": null,
+      "key": null,
+      "output": null,
+      "wait": {
+        "before_ms": 0,
+        "settle": true,
+        "timeout_ms": 12000,
+        "until": null
+      },
+      "checkpoint": null,
+      "risk": "elevated",
+      "optional": false
+    },
+    {
+      "index": 2,
+      "intent": "submit sign-on",
+      "action": "press",
+      "target": null,
+      "value": null,
+      "url": null,
+      "key": "Enter",
+      "output": null,
+      "wait": {
+        "before_ms": 0,
+        "settle": true,
+        "timeout_ms": 12000,
+        "until": {
+          "kind": "text_present",
+          "text": "Home > Member Inquiry",
+          "match": "normalized",
+          "control": null,
+          "pattern": null,
+          "operands": [],
+          "note": "state reached after this step"
+        }
+      },
+      "checkpoint": {
+        "kind": "text_present",
+        "text": "Home > Member Inquiry",
+        "match": "normalized",
+        "control": null,
+        "pattern": null,
+        "operands": [],
+        "note": "state reached after this step"
+      },
+      "risk": "safe",
+      "optional": false
+    },
+    {
+      "index": 3,
+      "intent": "enter member ID for search",
+      "action": "type",
+      "target": {
+        "description": "textbox 'Member ID'",
+        "strategies": [
+          {
+            "kind": "label_text",
+            "rank": 0,
+            "confidence": 0.85,
+            "role": "textbox",
+            "name": null,
+            "label": {
+              "mode": "normalized",
+              "value": "Member ID"
+            },
+            "anchor": null,
+            "attr": null,
+            "attr_value": null,
+            "css": null,
+            "ordinal": null,
+            "within_text": null
+          },
+          {
+            "kind": "anchor_relative",
+            "rank": 1,
+            "confidence": 0.7,
+            "role": "textbox",
+            "name": null,
+            "label": null,
+            "anchor": {
+              "anchor_text": "Member ID",
+              "anchor_match": "normalized",
+              "container_role": "row",
+              "column_header": null,
+              "cell_index": 1
+            },
+            "attr": null,
+            "attr_value": null,
+            "css": null,
+            "ordinal": null,
+            "within_text": null
+          },
+          {
+            "kind": "dom_attr",
+            "rank": 2,
+            "confidence": 0.6,
+            "role": null,
+            "name": null,
+            "label": null,
+            "anchor": null,
+            "attr": "name",
+            "attr_value": "ctl00$MainContent$txtMemberId",
+            "css": null,
+            "ordinal": null,
+            "within_text": null
+          },
+          {
+            "kind": "dom_css",
+            "rank": 3,
+            "confidence": 0.35,
+            "role": null,
+            "name": null,
+            "label": null,
+            "anchor": null,
+            "attr": null,
+            "attr_value": null,
+            "css": "tbody > tr:nth-of-type(2) > td:nth-of-type(2) > input",
+            "ordinal": null,
+            "within_text": null
+          }
+        ],
+        "frame_path": [
+          "mcbmain"
+        ],
+        "allow_fallback": true
+      },
+      "value": {
+        "source": "param",
+        "literal": null,
+        "ref": "member_id"
+      },
+      "url": null,
+      "key": null,
+      "output": null,
+      "wait": {
+        "before_ms": 0,
+        "settle": true,
+        "timeout_ms": 12000,
+        "until": null
+      },
+      "checkpoint": null,
+      "risk": "elevated",
+      "optional": false
+    },
+    {
+      "index": 4,
+      "intent": "search for member",
+      "action": "click",
+      "target": {
+        "description": "button 'Search'",
+        "strategies": [
+          {
+            "kind": "ax_role_name",
+            "rank": 0,
+            "confidence": 0.95,
+            "role": "button",
+            "name": {
+              "mode": "normalized",
+              "value": "Search"
+            },
+            "label": null,
+            "anchor": null,
+            "attr": null,
+            "attr_value": null,
+            "css": null,
+            "ordinal": null,
+            "within_text": null
+          },
+          {
+            "kind": "label_text",
+            "rank": 1,
+            "confidence": 0.85,
+            "role": "button",
+            "name": null,
+            "label": {
+              "mode": "normalized",
+              "value": "Search"
+            },
+            "anchor": null,
+            "attr": null,
+            "attr_value": null,
+            "css": null,
+            "ordinal": null,
+            "within_text": null
+          },
+          {
+            "kind": "dom_attr",
+            "rank": 2,
+            "confidence": 0.6,
+            "role": null,
+            "name": null,
+            "label": null,
+            "anchor": null,
+            "attr": "name",
+            "attr_value": "ctl00$MainContent$btnSearch",
+            "css": null,
+            "ordinal": null,
+            "within_text": null
+          },
+          {
+            "kind": "dom_css",
+            "rank": 3,
+            "confidence": 0.35,
+            "role": null,
+            "name": null,
+            "label": null,
+            "anchor": null,
+            "attr": null,
+            "attr_value": null,
+            "css": "tbody > tr:nth-of-type(3) > td:nth-of-type(2) > input:nth-of-type(1)",
+            "ordinal": null,
+            "within_text": null
+          }
+        ],
+        "frame_path": [
+          "mcbmain"
+        ],
+        "allow_fallback": true
+      },
+      "value": null,
+      "url": null,
+      "key": null,
+      "output": null,
+      "wait": {
+        "before_ms": 0,
+        "settle": true,
+        "timeout_ms": 12000,
+        "until": {
+          "kind": "all_of",
+          "text": null,
+          "match": "normalized",
+          "control": null,
+          "pattern": null,
+          "operands": [
+            {
+              "kind": "text_present",
+              "text": "Home > Member Inquiry > Detail",
+              "match": "normalized",
+              "control": null,
+              "pattern": null,
+              "operands": [],
+              "note": "state reached after this step"
+            },
+            {
+              "kind": "control_present",
+              "text": null,
+              "match": "normalized",
+              "control": {
+                "description": "source of output 'savings_balance'",
+                "strategies": [
+                  {
+                    "kind": "anchor_relative",
+                    "rank": 0,
+                    "confidence": 0.8,
+                    "role": "cell",
+                    "name": null,
+                    "label": null,
+                    "anchor": {
+                      "anchor_text": "SAVINGS",
+                      "anchor_match": "normalized",
+                      "container_role": "row",
+                      "column_header": "Current Balance",
+                      "cell_index": null
+                    },
+                    "attr": null,
+                    "attr_value": null,
+                    "css": null,
+                    "ordinal": null,
+                    "within_text": null
+                  },
+                  {
+                    "kind": "dom_css",
+                    "rank": 1,
+                    "confidence": 0.35,
+                    "role": null,
+                    "name": null,
+                    "label": null,
+                    "anchor": null,
+                    "attr": null,
+                    "attr_value": null,
+                    "css": "table:nth-of-type(2) > tbody > tr:nth-of-type(2) > td:nth-of-type(4)",
+                    "ordinal": null,
+                    "within_text": null
+                  }
+                ],
+                "frame_path": [
+                  "mcbmain"
+                ],
+                "allow_fallback": true
+              },
+              "pattern": null,
+              "operands": [],
+              "note": "output savings_balance is readable"
+            },
+            {
+              "kind": "control_present",
+              "text": null,
+              "match": "normalized",
+              "control": {
+                "description": "source of output 'member_name'",
+                "strategies": [
+                  {
+                    "kind": "anchor_relative",
+                    "rank": 0,
+                    "confidence": 0.7,
+                    "role": "text",
+                    "name": null,
+                    "label": null,
+                    "anchor": {
+                      "anchor_text": "Member",
+                      "anchor_match": "normalized",
+                      "container_role": "row",
+                      "column_header": null,
+                      "cell_index": 1
+                    },
+                    "attr": null,
+                    "attr_value": null,
+                    "css": null,
+                    "ordinal": null,
+                    "within_text": null
+                  },
+                  {
+                    "kind": "dom_css",
+                    "rank": 1,
+                    "confidence": 0.35,
+                    "role": null,
+                    "name": null,
+                    "label": null,
+                    "anchor": null,
+                    "attr": null,
+                    "attr_value": null,
+                    "css": "tr:nth-of-type(2) > td:nth-of-type(2) > font > b",
+                    "ordinal": null,
+                    "within_text": null
+                  }
+                ],
+                "frame_path": [
+                  "mcbmain"
+                ],
+                "allow_fallback": true
+              },
+              "pattern": null,
+              "operands": [],
+              "note": "output member_name is readable"
+            }
+          ],
+          "note": "goal state reached"
+        }
+      },
+      "checkpoint": {
+        "kind": "all_of",
+        "text": null,
+        "match": "normalized",
+        "control": null,
+        "pattern": null,
+        "operands": [
+          {
+            "kind": "text_present",
+            "text": "Home > Member Inquiry > Detail",
+            "match": "normalized",
+            "control": null,
+            "pattern": null,
+            "operands": [],
+            "note": "state reached after this step"
+          },
+          {
+            "kind": "control_present",
+            "text": null,
+            "match": "normalized",
+            "control": {
+              "description": "source of output 'savings_balance'",
+              "strategies": [
+                {
+                  "kind": "anchor_relative",
+                  "rank": 0,
+                  "confidence": 0.8,
+                  "role": "cell",
+                  "name": null,
+                  "label": null,
+                  "anchor": {
+                    "anchor_text": "SAVINGS",
+                    "anchor_match": "normalized",
+                    "container_role": "row",
+                    "column_header": "Current Balance",
+                    "cell_index": null
+                  },
+                  "attr": null,
+                  "attr_value": null,
+                  "css": null,
+                  "ordinal": null,
+                  "within_text": null
+                },
+                {
+                  "kind": "dom_css",
+                  "rank": 1,
+                  "confidence": 0.35,
+                  "role": null,
+                  "name": null,
+                  "label": null,
+                  "anchor": null,
+                  "attr": null,
+                  "attr_value": null,
+                  "css": "table:nth-of-type(2) > tbody > tr:nth-of-type(2) > td:nth-of-type(4)",
+                  "ordinal": null,
+                  "within_text": null
+                }
+              ],
+              "frame_path": [
+                "mcbmain"
+              ],
+              "allow_fallback": true
+            },
+            "pattern": null,
+            "operands": [],
+            "note": "output savings_balance is readable"
+          },
+          {
+            "kind": "control_present",
+            "text": null,
+            "match": "normalized",
+            "control": {
+              "description": "source of output 'member_name'",
+              "strategies": [
+                {
+                  "kind": "anchor_relative",
+                  "rank": 0,
+                  "confidence": 0.7,
+                  "role": "text",
+                  "name": null,
+                  "label": null,
+                  "anchor": {
+                    "anchor_text": "Member",
+                    "anchor_match": "normalized",
+                    "container_role": "row",
+                    "column_header": null,
+                    "cell_index": 1
+                  },
+                  "attr": null,
+                  "attr_value": null,
+                  "css": null,
+                  "ordinal": null,
+                  "within_text": null
+                },
+                {
+                  "kind": "dom_css",
+                  "rank": 1,
+                  "confidence": 0.35,
+                  "role": null,
+                  "name": null,
+                  "label": null,
+                  "anchor": null,
+                  "attr": null,
+                  "attr_value": null,
+                  "css": "tr:nth-of-type(2) > td:nth-of-type(2) > font > b",
+                  "ordinal": null,
+                  "within_text": null
+                }
+              ],
+              "frame_path": [
+                "mcbmain"
+              ],
+              "allow_fallback": true
+            },
+            "pattern": null,
+            "operands": [],
+            "note": "output member_name is readable"
+          }
+        ],
+        "note": "goal state reached"
+      },
+      "risk": "elevated",
+      "optional": false
+    }
+  ],
+  "success_condition": {
+    "kind": "all_of",
+    "text": null,
+    "match": "normalized",
+    "control": null,
+    "pattern": null,
+    "operands": [
+      {
+        "kind": "text_present",
+        "text": "Home > Member Inquiry > Detail",
+        "match": "normalized",
+        "control": null,
+        "pattern": null,
+        "operands": [],
+        "note": "state reached after this step"
+      },
+      {
+        "kind": "control_present",
+        "text": null,
+        "match": "normalized",
+        "control": {
+          "description": "source of output 'savings_balance'",
+          "strategies": [
+            {
+              "kind": "anchor_relative",
+              "rank": 0,
+              "confidence": 0.8,
+              "role": "cell",
+              "name": null,
+              "label": null,
+              "anchor": {
+                "anchor_text": "SAVINGS",
+                "anchor_match": "normalized",
+                "container_role": "row",
+                "column_header": "Current Balance",
+                "cell_index": null
+              },
+              "attr": null,
+              "attr_value": null,
+              "css": null,
+              "ordinal": null,
+              "within_text": null
+            },
+            {
+              "kind": "dom_css",
+              "rank": 1,
+              "confidence": 0.35,
+              "role": null,
+              "name": null,
+              "label": null,
+              "anchor": null,
+              "attr": null,
+              "attr_value": null,
+              "css": "table:nth-of-type(2) > tbody > tr:nth-of-type(2) > td:nth-of-type(4)",
+              "ordinal": null,
+              "within_text": null
+            }
+          ],
+          "frame_path": [
+            "mcbmain"
+          ],
+          "allow_fallback": true
+        },
+        "pattern": null,
+        "operands": [],
+        "note": "output savings_balance is readable"
+      },
+      {
+        "kind": "control_present",
+        "text": null,
+        "match": "normalized",
+        "control": {
+          "description": "source of output 'member_name'",
+          "strategies": [
+            {
+              "kind": "anchor_relative",
+              "rank": 0,
+              "confidence": 0.7,
+              "role": "text",
+              "name": null,
+              "label": null,
+              "anchor": {
+                "anchor_text": "Member",
+                "anchor_match": "normalized",
+                "container_role": "row",
+                "column_header": null,
+                "cell_index": 1
+              },
+              "attr": null,
+              "attr_value": null,
+              "css": null,
+              "ordinal": null,
+              "within_text": null
+            },
+            {
+              "kind": "dom_css",
+              "rank": 1,
+              "confidence": 0.35,
+              "role": null,
+              "name": null,
+              "label": null,
+              "anchor": null,
+              "attr": null,
+              "attr_value": null,
+              "css": "tr:nth-of-type(2) > td:nth-of-type(2) > font > b",
+              "ordinal": null,
+              "within_text": null
+            }
+          ],
+          "frame_path": [
+            "mcbmain"
+          ],
+          "allow_fallback": true
+        },
+        "pattern": null,
+        "operands": [],
+        "note": "output member_name is readable"
+      }
+    ],
+    "note": "goal state reached"
+  },
+  "policy": {
+    "max_risk": "elevated",
+    "requires_approval_for_unattended": true,
+    "allowed_actions": [
+      "navigate",
+      "click",
+      "type",
+      "select",
+      "press",
+      "extract",
+      "wait",
+      "assert",
+      "finish"
+    ]
+  },
+  "approval": "draft",
+  "provenance": {
+    "discovery_run_id": "discover_684b2d83",
+    "recorded_at": "2026-09-18T02:49:54.011901Z",
+    "model": "ollama/qwen2.5:7b-instruct",
+    "raw_step_count": 6,
+    "surface_fingerprint": "2bf376126ccd5424",
+    "notes": "recorded from goal 'Sign on to the console, search for the member, and reach the member detail screen showing their account balances.'; 6 model steps pruned to 5"
+  },
+  "stability": {
+    "replays": 0,
+    "successes": 0,
+    "business_outcomes": 0,
+    "failures": 0,
+    "last_replay_at": null,
+    "fallback_counts": {}
+  },
+  "overlays": []
+}

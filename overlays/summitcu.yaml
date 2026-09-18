@@ -1,0 +1,44 @@
+# Tenant overlay: Summit Community CU runs the same vendor product as First
+# Valley, on a later build, branded and configured differently.
+#
+# This is the multi-tenant answer in concrete form. The flow's *shape* is
+# identical and stays owned by the base capability; what differs is three
+# strings. Re-recording per tenant would produce a second artifact that drifts
+# away from the first on its own schedule, for no benefit.
+#
+# What differs on this tenant:
+#   * route      /members/search  ->  /members/lookup
+#   * label      "Member ID"      ->  "Member Number"
+#   * button     "Search"         ->  "Find"
+#   * an extra Region filter on the search form (ignored; not required)
+#   * product version 7.2.14 -> 7.4.03
+#
+# What does not differ, and therefore needs no override: sign-on, the member
+# detail screen, the accounts table, every checkpoint, every outcome detector,
+# and both output extractions -- because those are anchored on roles, labels and
+# row content rather than on markup.
+
+capability: member.savings_balance.lookup
+tenant: summitcu
+product_version: "7.4.03"
+
+url_overrides:
+  entry_url: "http://127.0.0.1:8848/t/summitcu/"
+
+# Keys are authored against the control the base capability targets, not against
+# step numbers -- a re-recording can renumber steps, but "the Member ID field"
+# stays the Member ID field. `ledgerhand overlay` resolves these to the indexed
+# form before storing them.
+control_overrides:
+  "step:Member ID":
+    role: textbox
+    label: "Member Number"
+    description: "textbox 'Member Number' (tenant B wording)"
+  "step:Search":
+    role: button
+    label: "Find"
+    description: "button 'Find' (tenant B wording)"
+
+notes: >-
+  Same Meridian Core product on build 7.4.03. Only the search screen's wording
+  and route differ; the rest of the flow resolves unchanged.

@@ -1,0 +1,39 @@
+{
+  "id": "iv_680eebe931",
+  "created_at": "2026-09-18T02:52:37.387549Z",
+  "status": "resolved",
+  "trigger": "replay_hard_failure",
+  "run_id": "replay_b81f2d35",
+  "session_id": "sess_e8bfb082",
+  "capability": "member.savings_balance.lookup@v1",
+  "goal": "Sign on to the servicing console, look up a member by member id, and return the current balance of their SAVINGS account together with the member name.",
+  "tenant": "firstvalley",
+  "step_index": 2,
+  "step_intent": "submit sign-on",
+  "reason": "SESSION_EXPIRED: The application session expired; re-authentication is required.",
+  "url": "http://127.0.0.1:8848/t/firstvalley/console",
+  "observation_summary": "URL: http://127.0.0.1:8848/t/firstvalley/console\nTITLE: First Valley Credit Union - Session Expired\nSCREEN TEXT:\n  First Valley Credit Union | Meridian Core 7.2.14 \u2014 Member Servicing\n  Your session has expired.\n  For security, sessions end after a period of inactivity. Please sign in again.\n  Return to sign-on\nCONTROLS:\n  [f0_e1] link \"Return to sign-on\"\n  [f0_t1] cell \"First Valley Credit Union | Meridian Core 7.2.14 \u2014 Member Se\"\n  [f0_t2] text \"First Valley Credit Union\"\n  [f0_t3] text \"Your session has expired.\"",
+  "screenshot": "/Users/virinchisai/ledgerhand/evidence/replay_b81f2d35/screens/escalation.png",
+  "requested_of_operator": "Replay of member.savings_balance.lookup@v1 stopped at step 2. Take control, complete or abandon the task, then hand control back.",
+  "operator": "auto.operator",
+  "claimed_at": "2026-09-18T02:52:37.823261Z",
+  "returned_at": "2026-09-18T02:52:37.824279Z",
+  "operator_actions": [
+    {
+      "at": "2026-09-18T02:52:37.824250Z",
+      "kind": "note",
+      "target": "",
+      "value": null,
+      "note": "auto.operator took control of session sess_e8bfb082"
+    },
+    {
+      "at": "2026-09-18T02:52:37.824327Z",
+      "kind": "resume",
+      "target": "",
+      "value": null,
+      "note": "operator inspected the stopped session and released it"
+    }
+  ],
+  "resolution": "run resumed from step 2; final status failed",
+  "resume_requested": true
+}
