@@ -324,3 +324,14 @@ def test_a_reference_in_the_wrong_namespace_is_still_honoured(app_server, gate, 
             agent._resolve_value(goal, "@param:not_a_thing")
     finally:
         surface.close()
+
+
+def test_an_unconfigured_secret_fails_cleanly(app_server, artifact, surface, gate,
+                                              evidence, monkeypatch):
+    """An operator can read this. A stack trace is not a result contract."""
+    monkeypatch.delenv("LEDGERHAND_MCB_PASSWORD", raising=False)
+    monkeypatch.delenv("MCB_PASSWORD", raising=False)
+    result = _engine(surface, gate, evidence).run(artifact, {"member_id": "12345"})
+    assert result.status is ReplayStatus.FAILED
+    assert "MCB_PASSWORD" in result.failure.observed
+    assert "not present in the environment" in result.failure.observed

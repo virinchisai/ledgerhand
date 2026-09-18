@@ -127,8 +127,14 @@ class ReplayEngine:
         self.surface.navigate(entry)
         self.surface.settle()
 
-        stop = self._attempt(spec, args, result, start=0)
-        stop = self._escalate_and_resume(spec, args, result, stop)
+        try:
+            stop = self._attempt(spec, args, result, start=0)
+            stop = self._escalate_and_resume(spec, args, result, stop)
+        except ArgumentError as exc:
+            stop = _Stop(ReplayStatus.FAILED, failure=FailureDetail(
+                step_index=-1, step_intent="value resolution",
+                expected="every referenced parameter and secret to resolve",
+                observed=str(exc)))
         self._apply_stop(spec, result, stop, args)
         result.duration_ms = int((time.monotonic() - started) * 1000)
         self.evidence.event("replay_end", status=result.status.value,
@@ -349,7 +355,16 @@ class ReplayEngine:
                 step, expected="human confirmation for an irreversible step",
                 observed=risk_decision.reason, obs=obs))
 
-        value, sensitive = self._value_for(step.value, args, spec.inputs)
+        try:
+            value, sensitive = self._value_for(step.value, args, spec.inputs)
+        except ArgumentError as exc:
+            # A secret that is not configured is an operational error the caller
+            # must be able to read, not a stack trace. It reaches here rather
+            # than preflight because a step's reference is only resolved when
+            # that step runs.
+            return _Stop(ReplayStatus.FAILED, failure=self._failure(
+                step, expected="every referenced secret to be configured",
+                observed=str(exc), obs=obs))
         outcome = self.surface.act(ActRequest(
             kind=step.action, node=node, value=value, key=step.key, sensitive=sensitive))
         self.evidence.event("action", step=step.index, action=step.action.value,

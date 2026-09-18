@@ -1,0 +1,2 @@
+{"ts": "2026-09-18T03:04:45.481+00:00", "run_id": "replay_8415386c", "kind": "replay_start", "capability": "member.savings_balance.lookup@v1", "tenant": "firstvalley", "approval": "draft", "attended": false, "arguments": ["member_id"], "policy_profile": "default"}
+{"ts": "2026-09-18T03:04:45.482+00:00", "run_id": "replay_8415386c", "kind": "replay_end", "status": "failed", "reason": "member_id='not-a-number' does not match [0-9]{4,12}"}

@@ -64,7 +64,10 @@ ledgerhand discover goals/member-savings-balance.yaml
 ledgerhand show member.savings_balance.lookup
 ```
 
-**3 — Replay** it deterministically with different arguments. No model runs here:
+**3 — Replay** it deterministically with different arguments. No model runs here
+— but the flow signs on, so the mock credentials must be in the environment
+(step 0 above). A capability whose secret is unset fails with a clear message
+rather than a stack trace:
 
 ```bash
 ledgerhand replay member.savings_balance.lookup --arg member_id=23456
@@ -83,7 +86,7 @@ Everything except step 1 is model-free, so the whole system can be exercised
 with no model installed at all:
 
 ```bash
-python3 -m pytest              # 88 tests, incl. full discover→record→replay
+python3 -m pytest              # 89 tests, incl. full discover→record→replay
 ledgerhand replay member.savings_balance.lookup --arg member_id=12345
 ```
 

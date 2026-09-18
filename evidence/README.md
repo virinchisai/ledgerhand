@@ -9,8 +9,9 @@ Two halves, and the distinction matters:
   Reproduce all of it on any machine, with no model installed:
 
   ```bash
-  ledgerhand serve-app          # in one shell
-  ./scripts/evidence.sh         # in another
+  ledgerhand serve-app                      # in one shell
+  ./scripts/evidence.sh                     # in another
+  python3 scripts/build_evidence_readme.py  # regenerates this file
   ```
 
 Every file here was written through the redactor.
@@ -56,33 +57,34 @@ Three things worth noticing:
   recorded and replays.
 * **The two questions are asked separately.** `nav` picks the next action;
   `CHECK` asks only "are the wanted values on this screen, and where?". Fused
-  into one question, this model timed out at 900s on the detail screen and, on
-  an earlier attempt, navigated away from the screen holding the answer. Split,
-  it binds both outputs in one shot. See REPORT.md §1.
+  into one question this model timed out at 900s on the detail screen and, on
+  an earlier attempt, answered by clicking "New Search" — walking off the
+  screen that held the answer. Split, it binds both outputs in one shot.
+  See REPORT.md §1.
 
-Note the first decision cost ~365s and the rest ~110-150s: that is the model
-loading, not thinking. It is also why `warm()` exists.
+The first decision costs ~365s and the rest ~110–150s: that difference is the
+model loading, not thinking, which is why `OllamaClient.warm()` exists.
 
 ---
 
 ## The replays
 
-Produced by `scripts/evidence.sh`, in order. Each row is its own directory with
-a structured `run.jsonl`, a `result.json`, and screenshots.
+Produced by `scripts/evidence.sh`, in order. Each is its own directory with
+a structured `run.jsonl`, a `result.json` and screenshots.
 
 | # | scenario | result | run |
 |---|---|---|---|
-| 1 | happy path — the member it was recorded against | ✅ **SUCCESS** | `replay_13345690` |
-| 2 | a **different** member — proves it is parameterised, not a macro | ✅ **SUCCESS** | `replay_f98be29e` |
-| 3 | member that does not exist | 🟡 **BUSINESS OUTCOME** `MEMBER_NOT_FOUND` | `replay_ca78c7c5` |
-| 4 | restricted record — permission denial | 🟡 **BUSINESS OUTCOME** `ACCESS_DENIED` | `replay_3566fa75` |
-| 5 | caller passed a non-numeric member id | 🔴 **FAILED** | `replay_39a7f052` |
-| 6 | unexpected maintenance interstitial injected | ✅ **SUCCESS** _(recovered MAINTENANCE_INTERSTITIAL)_ | `replay_414de452` |
-| 7 | 1.2s of injected latency | ✅ **SUCCESS** | `replay_a9f01078` |
-| 8 | HTTP 500 injected | 🔴 **FAILED** `APP_ERROR` | `replay_9f5e7bcb` |
-| 9 | session expired mid-run | 🟣 **ESCALATED** `SESSION_EXPIRED` _(handed to an operator and returned)_ | `replay_b81f2d35` |
-| 10 | **tenant B** — same capability, overlay applied | ✅ **SUCCESS** | `replay_06ed66c4` |
-| 11 | invoked by name, as an AI agent would call it | ✅ **SUCCESS** | `invoke_9bdf316d` |
+| 1 | happy path — the member it was recorded against | ✅ **SUCCESS** | `replay_323503c0` |
+| 2 | a **different** member — proves it is parameterised, not a macro | ✅ **SUCCESS** | `replay_cf7e2013` |
+| 3 | member that does not exist | 🟡 **BUSINESS OUTCOME** `MEMBER_NOT_FOUND` | `replay_609e4008` |
+| 4 | restricted record — permission denial | 🟡 **BUSINESS OUTCOME** `ACCESS_DENIED` | `replay_b6bc66ea` |
+| 5 | caller passed a non-numeric member id | 🔴 **FAILED** | `replay_8415386c` |
+| 6 | unexpected maintenance interstitial injected | ✅ **SUCCESS** _(recovered MAINTENANCE_INTERSTITIAL)_ | `replay_20d8b4e8` |
+| 7 | 1.2s of injected latency | ✅ **SUCCESS** | `replay_7c594495` |
+| 8 | HTTP 500 injected | 🔴 **FAILED** `APP_ERROR` | `replay_8fae1549` |
+| 9 | session expired mid-run | 🟣 **ESCALATED** `SESSION_EXPIRED` _(handed to an operator and returned)_ | `replay_b9bb31fd` |
+| 10 | **tenant B** — same capability, overlay applied | ✅ **SUCCESS** | `replay_42b95eec` |
+| 11 | invoked by name, as an AI agent would call it | ✅ **SUCCESS** | `invoke_f3f87ccd` |
 
 The three rows that carry the argument of the whole design:
 
@@ -91,9 +93,9 @@ The three rows that carry the argument of the whole design:
 * **9** is a failure, and says so with a step index, expected-vs-observed, a
   screenshot and a DOM snapshot — then hands the live session to a person and
   takes it back.
-* **10** is the same artifact, unmodified, running against a second institution
-  whose build renames `Member ID` to `Member Number` and `/search` to `/lookup`.
-  The difference is a nine-line overlay, not a second recording.
+* **10** is the same artifact, unmodified, against a second institution whose
+  build renames `Member ID` to `Member Number` and `/search` to `/lookup`. The
+  difference is a nine-line overlay, not a second recording.
 
 ---
 
@@ -109,7 +111,7 @@ If you read only three things:
 2. **The not-found replay** — `status: business_outcome`, `outcome_code:
    MEMBER_NOT_FOUND`, `ok: true`. A correct answer, not a crash. Compare it with
    the session-expiry run, which is a hard failure carrying a screenshot, a DOM
-   snapshot, and expected-vs-observed.
+   snapshot and expected-vs-observed.
 3. **The escalation run** — `control_transfer` events walking
    `agent → none → operator → agent`, the operator's actions recorded inline,
    and control returning under a fresh token.

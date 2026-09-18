@@ -230,7 +230,12 @@ contract properly rather than being built separately.
   enum, range. Passing a letter where a member id goes must not arrive at the
   caller disguised as a validation error from the bank.
 * **A step without a checkpoint cannot tell you it failed**, so the recorder
-  works hard to attach one, and the final step asserts the success condition.
+  attaches one wherever the screen actually changed. In the recorded artifact
+  the typing steps carry none and the submitting steps do — which is correct
+  rather than a gap: typing into a field changes no observable state, so any
+  assertion after it would be either vacuous or a lie. The assertions land on
+  the steps that move between screens, and the last one carries the success
+  condition, which additionally requires every output control to resolve.
 
 Two recorder bugs are worth naming because they are the ones that produce
 artifacts which pass their own replay and fail on the second invocation, and
